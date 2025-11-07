@@ -23,7 +23,7 @@ object ViewUtils {
 
   def titleBuilder(title: String, form: Option[Form[_]] = None)(implicit messages: Messages): String =
     form match {
-      case Some(f) if f.hasErrors || f.hasGlobalErrors =>s"${messages("bc.error.title.prefix")} $title - GOV.UK"
-      case _ => title + " - GOV.UK"
+      case Some(f) if f.hasErrors || f.hasGlobalErrors =>s"${messages("bc.error.title.prefix")} $title - ${messages("bc.awrs.serviceName")} - GOV.UK"
+      case _ => title + s" - ${messages("bc.awrs.serviceName")} - GOV.UK"
     }
 }
