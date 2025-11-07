@@ -57,7 +57,7 @@ class ApplicationControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
         val result = controller.unauthorised().apply(FakeRequest())
         val content = contentAsString(result)
         val doc = Jsoup.parse(content)
-        doc.title() must be(Messages("bc.unauthorised.title").concat(" - GOV.UK"))
+        doc.title() must be(Messages("bc.unauthorised.title").concat(" - Register as an alcohol wholesaler or producer - GOV.UK"))
       }
 
     }

@@ -94,7 +94,7 @@ class BusinessRegControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("What is your overseas business registered name and address? - GOV.UK")
+          document.title() must be("What is your overseas business registered name and address? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: ATED registration")
           document.select("h1").text must include("What is your overseas business registered name and address?")
           document.getElementsByAttributeValue("for", "businessName").text() must be("Business name")
@@ -115,7 +115,7 @@ class BusinessRegControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("What is your overseas business registered name and address? - GOV.UK")
+          document.title() must be("What is your overseas business registered name and address? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: ATED registration")
           document.select("h1").text must include("What is your overseas business registered name and address?")
           document.getElementById("businessName").`val`() must be("ACME")
@@ -132,7 +132,7 @@ class BusinessRegControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("What is the registered business name and address of your overseas agency? - GOV.UK")
+          document.title() must be("What is the registered business name and address of your overseas agency? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: ATED agency set up")
           document.select("h1").text must include("What is the registered business name and address of your overseas agency?")
           document.getElementsByAttributeValue("for", "businessName").text() must be("Business name")

@@ -95,7 +95,7 @@ class AgentRegisterNonUKClientControllerSpec extends PlaySpec with GuiceOneServe
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("What is your client’s overseas registered business name and address? - GOV.UK")
+          document.title() must be("What is your client’s overseas registered business name and address? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: Add a client")
           document.getElementsByTag("h1").text() must include("What is your client’s overseas registered business name and address?")
           document.getElementsByAttributeValue("for", "businessName").text() must be("Business name")
@@ -119,7 +119,7 @@ class AgentRegisterNonUKClientControllerSpec extends PlaySpec with GuiceOneServe
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("What is your client’s overseas registered business name and address? - GOV.UK")
+          document.title() must be("What is your client’s overseas registered business name and address? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: Add a client")
           document.getElementsByTag("h1").text() must include("What is your client’s overseas registered business name and address?")
           document.getElementsByAttributeValue("for", "businessName").text() must be("Business name")
@@ -146,7 +146,7 @@ class AgentRegisterNonUKClientControllerSpec extends PlaySpec with GuiceOneServe
           verify(mockBackLinkCache, times(1)).
             saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any())
 
-          document.title() must be("What is your client’s overseas registered business name and address? - GOV.UK")
+          document.title() must be("What is your client’s overseas registered business name and address? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: Add a client")
           document.getElementsByTag("h1").text() must include("What is your client’s overseas registered business name and address?")
           document.getElementsByAttributeValue("for", "businessName").text() must be("Business name")
@@ -169,7 +169,7 @@ class AgentRegisterNonUKClientControllerSpec extends PlaySpec with GuiceOneServe
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("What is your client’s overseas registered business name and address? - GOV.UK")
+          document.title() must be("What is your client’s overseas registered business name and address? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: Add a client")
           document.getElementsByTag("h1").text() must include("What is your client’s overseas registered business name and address?")
           document.getElementsByAttributeValue("for", "businessName").text() must be("Business name")
@@ -195,7 +195,7 @@ class AgentRegisterNonUKClientControllerSpec extends PlaySpec with GuiceOneServe
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("What is your client’s overseas registered business name and address? - GOV.UK")
+          document.title() must be("What is your client’s overseas registered business name and address? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: Add a client")
           document.getElementsByTag("h1").text() must include("What is your client’s overseas registered business name and address?")
           document.getElementById("businessName").`val`() must be("ACME")

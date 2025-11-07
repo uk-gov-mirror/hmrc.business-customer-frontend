@@ -95,7 +95,7 @@ class BusinessRegUKControllerSpec extends PlaySpec with GuiceOneServerPerSuite w
             status(result) must be(OK)
             val document = Jsoup.parse(contentAsString(result))
 
-            document.title() must be("Create AWRS group - GOV.UK")
+            document.title() must be("Create AWRS group - Register as an alcohol wholesaler or producer - GOV.UK")
             document.getElementsByClass("govuk-caption-xl").text() must be("This section is: AWRS registration")
             document.select("h1").text() must include("Create AWRS group")
 
@@ -120,7 +120,7 @@ class BusinessRegUKControllerSpec extends PlaySpec with GuiceOneServerPerSuite w
             status(result) must be(OK)
             val document = Jsoup.parse(contentAsString(result))
 
-            document.title() must be("Create AWRS group - GOV.UK")
+            document.title() must be("Create AWRS group - Register as an alcohol wholesaler or producer - GOV.UK")
             document.getElementsByClass("govuk-caption-xl").text() must be("This section is: AWRS registration")
             document.select("h1").text() must include("New business details")
             document.getElementsByAttributeValue("for", "businessName").text() must be("Group representative name")

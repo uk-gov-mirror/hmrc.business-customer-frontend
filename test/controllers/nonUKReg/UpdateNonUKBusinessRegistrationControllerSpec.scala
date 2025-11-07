@@ -132,7 +132,7 @@ class UpdateNonUKBusinessRegistrationControllerSpec extends PlaySpec with GuiceO
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("What is your client’s overseas registered business name and address? - GOV.UK")
+          document.title() must be("What is your client’s overseas registered business name and address? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: Add a client")
           document.getElementsByTag("h1").text() must include("What is your client’s overseas registered business name and address?")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: Add a client")
@@ -210,7 +210,7 @@ class UpdateNonUKBusinessRegistrationControllerSpec extends PlaySpec with GuiceO
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("What is the registered business name and address of your overseas agency? - GOV.UK")
+          document.title() must be("What is the registered business name and address of your overseas agency? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.getElementsByTag("h1").text() must include("What is the registered business name and address of your overseas agency?")
           document.getElementsByClass("govuk-caption-xl").text() must be("This section is: ATED agency set up")
 

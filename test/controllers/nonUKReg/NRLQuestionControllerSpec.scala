@@ -87,7 +87,7 @@ class NRLQuestionControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
         viewWithAuthorisedClient(service) { result =>
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
-          document.title must be("Are you a non-resident landlord? - GOV.UK")
+          document.title must be("Are you a non-resident landlord? - Register as an alcohol wholesaler or producer - GOV.UK")
         }
       }
 
@@ -95,7 +95,7 @@ class NRLQuestionControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
         viewWithAuthorisedClientWithSavedData(service) { result =>
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
-          document.title must be("Are you a non-resident landlord? - GOV.UK")
+          document.title must be("Are you a non-resident landlord? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.select(".govuk-radios__item").text() must include("Yes")
           document.select(".govuk-radios__item").text() must include("No")
           document.getElementById("paysSA-2").outerHtml() must include("checked")

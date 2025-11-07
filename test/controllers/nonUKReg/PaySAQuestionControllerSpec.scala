@@ -90,7 +90,7 @@ class PaySAQuestionControllerSpec extends PlaySpec with GuiceOneServerPerSuite w
         viewWithAuthorisedClient(service) { result =>
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
-          document.title must be("Do you pay tax in the UK through Self Assessment? - GOV.UK")
+          document.title must be("Do you pay tax in the UK through Self Assessment? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.select(".govuk-radios__item").text() must include("Yes")
           document.select(".govuk-radios__item").text() must include("No")
           document.getElementById("submit").text() must be("Continue")
@@ -100,7 +100,7 @@ class PaySAQuestionControllerSpec extends PlaySpec with GuiceOneServerPerSuite w
         viewWithAuthorisedClientWistSavedData(service) { result =>
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
-          document.title must be("Do you pay tax in the UK through Self Assessment? - GOV.UK")
+          document.title must be("Do you pay tax in the UK through Self Assessment? - Register as an alcohol wholesaler or producer - GOV.UK")
           document.select(".govuk-radios__item").text() must include("Yes")
           document.select(".govuk-radios__item").text() must include("No")
           document.getElementById("paySA-2").outerHtml() must include("checked")

@@ -105,7 +105,7 @@ class UpdateOverseasCompanyRegControllerSpec extends PlaySpec with GuiceOneServe
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("Do you have an overseas company registration number? - GOV.UK")
+          document.title() must be("Do you have an overseas company registration number? - Register as an alcohol wholesaler or producer - GOV.UK")
         }
       }
 
@@ -127,7 +127,7 @@ class UpdateOverseasCompanyRegControllerSpec extends PlaySpec with GuiceOneServe
           status(result) must be(OK)
           val document = Jsoup.parse(contentAsString(result))
 
-          document.title() must be("Do you have an overseas company registration number? - GOV.UK")
+          document.title() must be("Do you have an overseas company registration number? - Register as an alcohol wholesaler or producer - GOV.UK")
 
         }
       }
