@@ -69,7 +69,7 @@ class PaySAQuestionController @Inject()(val authConnector: AuthConnector,
           val paysSa = formData.paySA.getOrElse(false)
           if (paysSa) {
             redirectWithBackLink(businessVerificationController.get.controllerId,
-              controllers.routes.BusinessVerificationController.businessForm(service, businessType = "NRL"),
+              controllers.routes.BusinessNameController.onPageLoad(service, businessType = "NRL"),
               Some(controllers.nonUKReg.routes.PaySAQuestionController.view(service).url)
             )
           } else {

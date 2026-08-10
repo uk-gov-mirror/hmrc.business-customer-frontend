@@ -17,7 +17,7 @@
 package connectors
 
 import config.ApplicationConfig
-import models.{Address, ReviewDetails}
+import models.{Address, BusinessRegistration, ReviewDetails}
 import org.mockito.Mockito.when
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
@@ -56,6 +56,17 @@ class DataCacheConnectorSpec extends PlaySpec with GuiceOneServerPerSuite {
       }
     }
 
+    "fetchAndGetBusinessRegistrationDetailsForSession" must {
+      "fetch saved RegistrationDetails from SessionCache" in new Setup {
+        val registrationDetails: BusinessRegistration =
+          BusinessRegistration("ACME", Address("line1", "line2", None, None, None, "country"))
+        when(executeGet[CacheMap]).thenReturn(Future.successful(CacheMap("test", Map("BC_Business_Details_form_payload" -> Json.toJson(registrationDetails)))))
+
+        val result: Future[Option[BusinessRegistration]] = connector.fetchAndGetBusinessRegistrationDetailsForSession
+          await(result) must be(Some(registrationDetails))
+      }
+    }
+
     "saveAndReturnBusinessDetails" must {
 
       "save the fetched business details" in new Setup {
@@ -68,6 +79,19 @@ class DataCacheConnectorSpec extends PlaySpec with GuiceOneServerPerSuite {
         await(result).get must be(reviewDetails)
       }
 
+    }
+    "saveBusinessRegistrationDetails" must {
+
+      "save the business registration details" in new Setup {
+        val reviewDetails: BusinessRegistration = BusinessRegistration("ACME", Address("line1", "line2", None, None, None, "country"))
+        val inputBody: JsValue = Json.toJson(reviewDetails)
+
+        when(executePut[CacheMap](inputBody)).thenReturn(
+          Future.successful(CacheMap("test", Map("BC_Business_Details_form_payload" -> Json.toJson(reviewDetails)))))
+
+        val result: Future[Option[BusinessRegistration]] = connector.saveBusinessRegistrationDetails(reviewDetails)
+        await(result).get must be(reviewDetails)
+      }
     }
 
     "clearCache" must {

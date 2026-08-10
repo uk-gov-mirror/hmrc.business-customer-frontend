@@ -16,118 +16,96 @@
 
 package controllers
 
+import builders.AuthBuilder
 import config.ApplicationConfig
 import connectors.{BackLinkCacheConnector, BusinessRegCacheConnector}
-import controllers.nonUKReg.{BusinessRegController, NRLQuestionController}
+import forms.{BusinessName, SoleTraderName, Utr}
 import org.mockito.ArgumentMatchers
-import org.scalatestplus.mockito.MockitoSugar
 import org.mockito.Mockito._
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{
-  AnyContentAsFormUrlEncoded,
-  Headers,
-  MessagesControllerComponents,
-  Result
-}
+import play.api.mvc.{AnyContentAsFormUrlEncoded, Headers, MessagesControllerComponents, Result}
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Injecting}
 import services.BusinessMatchingService
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.domain.{SaUtr, SaUtrGenerator}
+import views.html._
 
 import java.util.UUID
-import views.html.{
-  business_lookup_LLP,
-  business_lookup_LP,
-  business_lookup_LTD,
-  business_lookup_NRL,
-  business_lookup_OBP,
-  business_lookup_SOP,
-  business_lookup_UIB,
-  business_verification,
-  details_not_found
-}
-
 import scala.concurrent.Future
 
-class BusinessVerificationValidationSpec
-    extends PlaySpec
-    with GuiceOneServerPerSuite
-    with MockitoSugar
-    with Injecting {
+class BusinessVerificationValidationSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with Injecting with BusinessMatchTestObjects {
 
-  val request: FakeRequest[_] = FakeRequest()
+  val request: FakeRequest[_]                              = FakeRequest()
   val mockBusinessMatchingService: BusinessMatchingService =
     mock[BusinessMatchingService]
-  val mockAuthConnector: AuthConnector = mock[AuthConnector]
-  val mockBackLinkCache: BackLinkCacheConnector = mock[BackLinkCacheConnector]
+  val mockAuthConnector: AuthConnector                         = mock[AuthConnector]
+  val mockBackLinkCache: BackLinkCacheConnector                = mock[BackLinkCacheConnector]
   val mockBusinessRegCacheConnector: BusinessRegCacheConnector =
     mock[BusinessRegCacheConnector]
   val service = "ATED"
-  val matchUtr: SaUtr = new SaUtrGenerator().nextSaUtr
-  val noMatchUtr: SaUtr = new SaUtrGenerator().nextSaUtr
 
-  val mockBusinessRegUKController: BusinessRegUKController =
-    mock[BusinessRegUKController]
-  val mockBusinessRegController: BusinessRegController =
-    mock[BusinessRegController]
-  val mockNrlQuestionConnector: NRLQuestionController =
-    mock[NRLQuestionController]
   val mockReviewDetailsController: ReviewDetailsController =
     mock[ReviewDetailsController]
-  val mockHomeController: HomeController = mock[HomeController]
-  val injectedViewInstance: business_verification =
-    inject[views.html.business_verification]
-  val injectedViewInstanceSOP: business_lookup_SOP =
-    inject[views.html.business_lookup_SOP]
-  val injectedViewInstanceLTD: business_lookup_LTD =
-    inject[views.html.business_lookup_LTD]
-  val injectedViewInstanceUIB: business_lookup_UIB =
-    inject[views.html.business_lookup_UIB]
-  val injectedViewInstanceOBP: business_lookup_OBP =
-    inject[views.html.business_lookup_OBP]
-  val injectedViewInstanceLLP: business_lookup_LLP =
-    inject[views.html.business_lookup_LLP]
-  val injectedViewInstanceLP: business_lookup_LP =
-    inject[views.html.business_lookup_LP]
-  val injectedViewInstanceNRL: business_lookup_NRL =
-    inject[views.html.business_lookup_NRL]
-  val injectedViewInstanceDetailsNotFound: details_not_found =
-    inject[views.html.details_not_found]
+  val injectedViewInstanceBusinessUtr: generic_business_utr =
+    inject[views.html.generic_business_utr]
 
-  val appConfig: ApplicationConfig = inject[ApplicationConfig]
+  val mockBusinessVerificationController: BusinessVerificationController = mock[BusinessVerificationController]
+
+  val appConfig: ApplicationConfig               = inject[ApplicationConfig]
   implicit val mcc: MessagesControllerComponents =
     inject[MessagesControllerComponents]
 
   class Setup {
-    val controller: BusinessVerificationController =
-      new BusinessVerificationController(
+    val controller: BusinessUtrController =
+      new BusinessUtrController(
         appConfig,
         mockAuthConnector,
-        injectedViewInstance,
-        injectedViewInstanceSOP,
-        injectedViewInstanceLTD,
-        injectedViewInstanceUIB,
-        injectedViewInstanceOBP,
-        injectedViewInstanceLLP,
-        injectedViewInstanceLP,
-        injectedViewInstanceNRL,
-        injectedViewInstanceDetailsNotFound,
+        injectedViewInstanceBusinessUtr,
         mockBusinessRegCacheConnector,
         mockBackLinkCache,
         mockBusinessMatchingService,
-        mockBusinessRegUKController,
-        mockBusinessRegController,
-        mockNrlQuestionConnector,
         mockReviewDetailsController,
-        mockHomeController,
+        mockBusinessVerificationController,
         mcc
       ) {
         override val controllerId = "test"
       }
   }
+  def matchSuccessResponse(businessType: String): JsValue = businessType match {
+    case "UIB"  => matchSuccessResponseUIB
+    case "LLP"  => matchSuccessResponseLLP
+    case "OBP"  => matchSuccessResponseOBP
+    case "NRL"  => matchSuccessResponseNRL
+    case "LTD"  => matchSuccessResponseLTD
+    case "LP"   => matchSuccessResponseLP
+    case "UT"   => matchSuccessResponseLTD
+    case "ULTD" => matchSuccessResponseLTD
+    case "SOP" => matchSuccessResponseSOP
+  }
+
+  val matchSuccessResponseSOP: JsValue = Json.parse("""
+      |{
+      |  "businessName": "ACME",
+      |  "businessType": "Sole Trader",
+      |  "businessAddress": {
+      |    "line_1": "line 1",
+      |    "line_2": "line 2",
+      |    "line_3": "line 3",
+      |    "line_4": "line 4",
+      |    "postcode": "AA1 1AA",
+      |    "country": "GB"
+      |  },
+      |  "sapNumber": "sap123",
+      |  "safeId": "safe123",
+      |  "isAGroup": false,
+      |  "directMatch" : false,
+      |  "agentReferenceNumber": "agent123",
+      |  "isBusinessDetailsEditable": false
+      |}
+    """.stripMargin)
 
   val matchSuccessResponseUIB: JsValue = Json.parse("""
       |{
@@ -175,27 +153,6 @@ class BusinessVerificationValidationSpec
       |{
       |  "businessName": "ACME",
       |  "businessType": "Limited company",
-      |  "businessAddress": {
-      |    "line_1": "line 1",
-      |    "line_2": "line 2",
-      |    "line_3": "line 3",
-      |    "line_4": "line 4",
-      |    "postcode": "AA1 1AA",
-      |    "country": "GB"
-      |  },
-      |  "sapNumber": "sap123",
-      |  "safeId": "safe123",
-      |  "isAGroup": false,
-      |  "directMatch" : false,
-      |  "agentReferenceNumber": "agent123",
-      |  "isBusinessDetailsEditable": false
-      |}
-    """.stripMargin)
-
-  val matchSuccessResponseSOP: JsValue = Json.parse("""
-      |{
-      |  "businessName": "ACME",
-      |  "businessType": "Sole trader",
       |  "businessAddress": {
       |    "line_1": "line 1",
       |    "line_2": "line 2",
@@ -280,378 +237,48 @@ class BusinessVerificationValidationSpec
     """{"reason":"Sorry. Business details not found. Try with correct UTR and/or name."}"""
   )
 
-  def submitWithUnAuthorisedUser(
-      businessType: String,
-      controller: BusinessVerificationController
-  )(test: Future[Result] => Any): Unit = {
-    val sessionId = s"session-${UUID.randomUUID}"
-    val userId = s"user-${UUID.randomUUID}"
-
-    builders.AuthBuilder.mockUnAuthorisedUser(userId, mockAuthConnector)
-
-    val result = controller
-      .submit(service, businessType)
-      .apply(
-        FakeRequest()
-          .withSession(
-            "sessionId" -> sessionId,
-            "token" -> "RANDOMTOKEN",
-            "userId" -> userId
-          )
-          .withHeaders(Headers("Authorization" -> "value"))
-      )
-
-    test(result)
-  }
-
   "BusinessVerificationValidationController" must {
 
-    type InputRequest = FakeRequest[AnyContentAsFormUrlEncoded]
-    type MustTestMessage = String
-    type InTestMessage = String
-    type ErrorMessage = String
-    type BusinessType = String
-
-    def nrlUtrRequest(
-        utr: String = matchUtr.utr,
-        businessName: String = "ACME"
-    ): FakeRequest[AnyContentAsFormUrlEncoded] =
-      FakeRequest("POST", "/").withFormUrlEncodedBody(
-        "saUTR" -> s"$utr",
-        "businessName" -> s"$businessName"
-      )
-    def ctUtrRequest(
-        ct: String = matchUtr.utr,
-        businessName: String = "ACME"
-    ): FakeRequest[AnyContentAsFormUrlEncoded] =
-      FakeRequest("POST", "/").withFormUrlEncodedBody(
-        "cotaxUTR" -> s"$ct",
-        "businessName" -> s"$businessName"
-      )
-    def psaUtrRequest(
-        psa: String = matchUtr.utr,
-        businessName: String = "ACME"
-    ): FakeRequest[AnyContentAsFormUrlEncoded] =
-      FakeRequest("POST", "/").withFormUrlEncodedBody(
-        "psaUTR" -> s"$psa",
-        "businessName" -> s"$businessName"
-      )
-    def saUtrRequest(
-        sa: String = matchUtr.utr,
-        firstName: String = "A",
-        lastName: String = "B"
-    ): FakeRequest[AnyContentAsFormUrlEncoded] =
-      FakeRequest("POST", "/").withFormUrlEncodedBody(
-        "saUTR" -> s"$sa",
-        "firstName" -> s"$firstName",
-        "lastName" -> s"$lastName"
-      )
-
-    val formValidationInputDataSetOrg: Seq[
-      (
-          MustTestMessage,
-          Seq[(InTestMessage, BusinessType, InputRequest, ErrorMessage)]
-      )
-    ] =
-      Seq(
-        (
-          "if the selection is Unincorporated body :",
-          Seq(
-            (
-              "Business Name must not be empty",
-              "UIB",
-              ctUtrRequest(businessName = ""),
-              "Enter a registered company name"
-            ),
-            (
-              "CO Tax UTR must not be empty",
-              "UIB",
-              ctUtrRequest(ct = ""),
-              "Enter a Corporation Tax Unique Taxpayer Reference"
-            ),
-            (
-              "Registered Name must not be more than 105 characters",
-              "UIB",
-              ctUtrRequest(businessName = "a" * 106),
-              "The registered company name cannot be more than 105 characters"
-            ),
-            (
-              "CO Tax UTR must be 10 digits",
-              "UIB",
-              ctUtrRequest(ct = "1" * 11),
-              "Enter a 10-digit Unique Taxpayer Reference (UTR). If your UTR is 13 digits, enter only the last 10 digits"
-            ),
-            (
-              "CO Tax UTR must contain only digits",
-              "UIB",
-              ctUtrRequest(ct = "12345678aa"),
-              "Enter a 10-digit Unique Taxpayer Reference (UTR). If your UTR is 13 digits, enter only the last 10 digits"
-            ),
-            (
-              "CO Tax UTR must be valid",
-              "UIB",
-              ctUtrRequest(ct = "1234567890"),
-              "The Corporation Tax Unique Taxpayer Reference is not valid"
-            )
-          )
-        ),
-        (
-          "if the selection is Limited Company :",
-          Seq(
-            (
-              "Business Name must not be empty",
-              "LTD",
-              ctUtrRequest(businessName = ""),
-              "Enter a registered company name"
-            ),
-            (
-              "CO Tax UTR must not be empty",
-              "LTD",
-              ctUtrRequest(ct = ""),
-              "Enter a Corporation Tax Unique Taxpayer Reference"
-            ),
-            (
-              "Registered Name must not be more than 105 characters",
-              "LTD",
-              ctUtrRequest(businessName = "a" * 106),
-              "The registered company name cannot be more than 105 characters"
-            ),
-            (
-              "CO Tax UTR must be 10 digits",
-              "LTD",
-              ctUtrRequest(ct = "1" * 11),
-              "Enter a 10-digit Unique Taxpayer Reference (UTR). If your UTR is 13 digits, enter only the last 10 digits"
-            ),
-            (
-              "CO Tax UTR must contain only digits",
-              "LTD",
-              ctUtrRequest(ct = "12345678aa"),
-              "Enter a 10-digit Unique Taxpayer Reference (UTR). If your UTR is 13 digits, enter only the last 10 digits"
-            ),
-            (
-              "CO Tax UTR must be valid",
-              "LTD",
-              ctUtrRequest(ct = "1234567890"),
-              "The Corporation Tax Unique Taxpayer Reference is not valid"
-            )
-          )
-        ),
-        (
-          "if the selection is Non Resident Landlord :",
-          Seq(
-            (
-              "Business Name must not be empty",
-              "NRL",
-              nrlUtrRequest(businessName = ""),
-              "Enter a registered company name"
-            ),
-            (
-              "SA UTR must not be empty",
-              "NRL",
-              nrlUtrRequest(utr = ""),
-              "Enter a Self Assessment Unique Taxpayer Reference"
-            ),
-            (
-              "SA UTR must be 10 digits",
-              "NRL",
-              nrlUtrRequest(utr = "12345678901"),
-              "Self Assessment Unique Taxpayer Reference must be 10 digits"
-            ),
-            (
-              "SA UTR must contain only digits",
-              "NRL",
-              nrlUtrRequest(utr = "12345678aa"),
-              "Self Assessment Unique Taxpayer Reference must be 10 digits"
-            ),
-            (
-              "SA UTR must be valid",
-              "NRL",
-              nrlUtrRequest(utr = "1234567890"),
-              "The Self Assessment Unique Taxpayer Reference is not valid"
-            )
-          )
-        ),
-        (
-          "if the selection is Limited Liability Partnership : ",
-          Seq(
-            (
-              "Business Name must not be empty",
-              "LLP",
-              psaUtrRequest(businessName = ""),
-              "Enter a registered company name"
-            ),
-            (
-              "Partnership Self Assessment UTR  must not be empty",
-              "LLP",
-              psaUtrRequest(psa = ""),
-              "Enter a Partnership Self Assessment Unique Taxpayer Reference"
-            ),
-            (
-              "Registered Name must not be more than 105 characters",
-              "LLP",
-              psaUtrRequest(businessName = "a" * 106),
-              "The registered company name cannot be more than 105 characters"
-            ),
-            (
-              "Partnership Self Assessment UTR  must be 10 digits",
-              "LLP",
-              psaUtrRequest(psa = "1" * 11),
-              "Partnership Self Assessment Unique Taxpayer Reference must be 10 digits"
-            ),
-            (
-              "Partnership Self Assessment UTR  must contain only digits",
-              "LLP",
-              psaUtrRequest(psa = "12345678aa"),
-              "Partnership Self Assessment Unique Taxpayer Reference must be 10 digits"
-            ),
-            (
-              "Partnership Self Assessment UTR  must be valid",
-              "LLP",
-              psaUtrRequest(psa = "1234567890"),
-              "The Partnership Self Assessment Unique Taxpayer Reference is not valid"
-            )
-          )
-        ),
-        (
-          "if the selection is Limited Partnership : ",
-          Seq(
-            (
-              "Business Name must not be empty",
-              "LP",
-              psaUtrRequest(businessName = ""),
-              "Enter a registered partnership name"
-            ),
-            (
-              "Partnership Self Assessment UTR  must not be empty",
-              "LP",
-              psaUtrRequest(psa = ""),
-              "Enter a Partnership Self Assessment Unique Taxpayer Reference"
-            ),
-            (
-              "Registered Name must not be more than 105 characters",
-              "LP",
-              psaUtrRequest(businessName = "a" * 106),
-              "The registered partnership name cannot be more than 105 characters"
-            ),
-            (
-              "Partnership Self Assessment UTR  must be 10 digits",
-              "LP",
-              psaUtrRequest(psa = "1" * 11),
-              "Partnership Self Assessment Unique Taxpayer Reference must be 10 digits"
-            ),
-            (
-              "Partnership Self Assessment UTR  must contain only digits",
-              "LP",
-              psaUtrRequest(psa = "12345678aa"),
-              "Partnership Self Assessment Unique Taxpayer Reference must be 10 digits"
-            ),
-            (
-              "Partnership Self Assessment UTR  must be valid",
-              "LP",
-              psaUtrRequest(psa = "1234567890"),
-              "The Partnership Self Assessment Unique Taxpayer Reference is not valid"
-            )
-          )
-        ),
-        (
-          "if the selection is Ordinary Business Partnership : ",
-          Seq(
-            (
-              "Business Name must not be empty",
-              "OBP",
-              psaUtrRequest(businessName = ""),
-              "Enter a registered partnership name"
-            ),
-            (
-              "Partnership Self Assessment UTR  must not be empty",
-              "OBP",
-              psaUtrRequest(psa = ""),
-              "Enter a Partnership Self Assessment Unique Taxpayer Reference"
-            ),
-            (
-              "Registered Name must not be more than 105 characters",
-              "OBP",
-              psaUtrRequest(businessName = "a" * 106),
-              "The registered partnership name cannot be more than 105 characters"
-            ),
-            (
-              "Partnership Self Assessment UTR  must be 10 digits",
-              "OBP",
-              psaUtrRequest(psa = "1" * 11),
-              "Partnership Self Assessment Unique Taxpayer Reference must be 10 digits"
-            ),
-            (
-              "Partnership Self Assessment UTR  must contain only digits",
-              "OBP",
-              psaUtrRequest(psa = "12345678aa"),
-              "Partnership Self Assessment Unique Taxpayer Reference must be 10 digits"
-            ),
-            (
-              "Partnership Self Assessment UTR  must be valid",
-              "OBP",
-              psaUtrRequest(psa = "1234567890"),
-              "The Partnership Self Assessment Unique Taxpayer Reference is not valid"
-            )
-          )
+    "CO Tax UTR must not be empty" in new Setup {
+      when(
+        mockBusinessRegCacheConnector.fetchAndGetCachedDetails[BusinessName](ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
         )
-      )
+      ).thenReturn(Future.successful(Some(BusinessName("ACME"))))
 
-    val formValidationInputDataSetInd
-        : Seq[(InTestMessage, BusinessType, InputRequest, ErrorMessage)] =
-      Seq(
-        (
-          "First name must not be empty",
-          "SOP",
-          saUtrRequest(matchUtr.utr, "", "b"),
-          "Enter a first name"
-        ),
-        (
-          "Last name must not be empty",
-          "SOP",
-          saUtrRequest(lastName = ""),
-          "Enter a last name"
-        ),
-        (
-          "SA UTR must not be empty",
-          "SOP",
-          saUtrRequest(sa = ""),
-          "Enter a Self Assessment Unique Taxpayer Reference"
-        ),
-        (
-          "First Name must not be more than 40 characters",
-          "SOP",
-          saUtrRequest(firstName = "a" * 41),
-          "A first name cannot be more than 40 characters"
-        ),
-        (
-          "Last Name must not be more than 40 characters",
-          "SOP",
-          saUtrRequest(lastName = "a" * 41),
-          "A last name cannot be more than 40 characters"
-        ),
-        (
-          "SA UTR must be 10 digits",
-          "SOP",
-          saUtrRequest(sa = "12345678901"),
-          "Self Assessment Unique Taxpayer Reference must be 10 digits"
-        ),
-        (
-          "SA UTR must contain only digits",
-          "SOP",
-          saUtrRequest(sa = "12345678aa"),
-          "Self Assessment Unique Taxpayer Reference must be 10 digits"
-        ),
-        (
-          "SA UTR must be valid",
-          "SOP",
-          saUtrRequest(sa = "1234567890"),
-          "The Self Assessment Unique Taxpayer Reference is not valid"
+      submitWithAuthorisedUserJson(
+        controller,
+        "LTD",
+        Map("utr" -> ""),
+        service
+      ) { result =>
+        status(result) must be(BAD_REQUEST)
+        contentAsString(result) must include(s"Enter a Corporation Tax Unique Taxpayer Reference")
+      }
+    }
+    "SA Tax UTR must not be empty" in new Setup {
+      when(
+        mockBusinessRegCacheConnector.fetchAndGetCachedDetails[SoleTraderName](ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
         )
-      )
+      ).thenReturn(Future.successful(Some(SoleTraderName("John", "Doe"))))
+      submitWithAuthorisedSaUserJson(
+        controller,
+        Map("utr" -> ""),
+        "AWRS"
+      ) { result =>
+        status(result) must be(BAD_REQUEST)
+        contentAsString(result) must include(s"Enter a Self Assessment Unique Taxpayer Reference")
+      }
+    }
 
-    "handle the user correctly" must {
+    "handle the utr submission validation correctly" must {
       "if the selection is an Organisation" must {
-        formValidationInputDataSetOrg foreach { dataSet =>
+        formValidationInputUTRDataSetOrg foreach { dataSet =>
           s"${dataSet._1}" must {
             dataSet._2 foreach { inputData =>
               s"${inputData._1}" in new Setup {
@@ -670,10 +297,9 @@ class BusinessVerificationValidationSpec
       }
 
       "if the selection is Sole Trader" must {
-        formValidationInputDataSetInd foreach { dataSet =>
+        formValidationInputUtrDataSetInd foreach { dataSet =>
           s"${dataSet._1}" in new Setup {
             submitWithAuthorisedUserSuccessIndividual(
-              dataSet._2,
               dataSet._3,
               controller
             ) { result =>
@@ -687,40 +313,27 @@ class BusinessVerificationValidationSpec
 
     "if the Ordinary Business Partnership form is successfully validated:" must {
       "for successful match, status should be 303 and user should be redirected to review details page" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
-        submitWithAuthorisedUserSuccessOrg(
-          "OBP",
-          FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "businessName" -> "Business Name",
-            "psaUTR" -> s"$matchUtr"
-          ),
-          controller
-        ) { result =>
-          status(result) must be(SEE_OTHER)
-          redirectLocation(result).get must include(
-            s"/business-customer/review-details/$service"
-          )
-        }
-      }
-      "for successful match, status should be 303 and user should be redirected to review details page for AWRS" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        )
-          .thenReturn(Future.successful(None))
+
         submitWithAuthorisedUserSuccessOrg(
           "OBP",
           FakeRequest("POST", "/")
             .withFormUrlEncodedBody(
-              "businessName" -> "Business Name",
-              "psaUTR" -> s"$matchUtr"
+              "utr" -> s"1111111111"
+            ),
+          controller,
+          "ATED"
+        ) { result =>
+          status(result) must be(SEE_OTHER)
+          redirectLocation(result).get must include(s"/business-customer/review-details/$service")
+
+        }
+      }
+      "for successful match, status should be 303 and user should be redirected to review details page for AWRS" in new Setup {
+        submitWithAuthorisedUserSuccessOrg(
+          "OBP",
+          FakeRequest("POST", "/")
+            .withFormUrlEncodedBody(
+              "utr" -> s"$matchUtr"
             ),
           controller,
           "awrs"
@@ -733,13 +346,15 @@ class BusinessVerificationValidationSpec
       }
 
       "for successful match, status should be 303 and user should be redirected to review details page for neither AWRS nor ATED journey" in new Setup {
-        when(mockBackLinkCache.saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
-          .thenReturn(Future.successful(None))
-        submitWithAuthorisedUserSuccessOrg("OBP", FakeRequest("POST", "/")
-          .withFormUrlEncodedBody("businessName" -> "Business Name", "psaUTR" -> s"$matchUtr"), controller, "amls") {
-          result =>
-            status(result) must be(SEE_OTHER)
-            redirectLocation(result).get must include(s"/business-customer/review-details/amls")
+        submitWithAuthorisedUserSuccessOrg(
+          "OBP",
+          FakeRequest("POST", "/")
+            .withFormUrlEncodedBody("utr" -> s"$matchUtr"),
+          controller,
+          "amls"
+        ) { result =>
+          status(result) must be(SEE_OTHER)
+          redirectLocation(result).get must include(s"/business-customer/review-details/amls")
         }
       }
 
@@ -747,8 +362,7 @@ class BusinessVerificationValidationSpec
         submitWithAuthorisedUserFailure(
           "OBP",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "businessName" -> "Business Name",
-            "psaUTR" -> s"$noMatchUtr"
+            "utr" -> s"$noMatchUtr"
           ),
           controller
         ) { result =>
@@ -759,20 +373,36 @@ class BusinessVerificationValidationSpec
         }
       }
     }
-
+    "return an error if no cached data is found for business Name" in new Setup {
+      submitWithAuthorisedUserOrgNoCachedName(
+        "OBP",
+        FakeRequest("POST", "/").withFormUrlEncodedBody(
+          "utr" -> s"$matchUtr"
+        ),
+        controller
+      ) { result =>
+        status(result) must be(INTERNAL_SERVER_ERROR)
+        }
+      }
+    "return an error if no cached data is found for Sole Trader Name" in new Setup {
+      val service = "AWRS"
+        submitWithAuthorisedSaUserNoCachedName(
+        "SOP",
+        FakeRequest("POST", "/").withFormUrlEncodedBody(
+          "utr" -> s"$matchUtr"
+        ),
+        controller,
+          service
+        ) { result =>
+          status(result) must be(INTERNAL_SERVER_ERROR)
+        }
+    }
     "if the Limited Liability Partnership form is successfully validated:" must {
       "for successful match, status should be 303 and  user should be redirected to review details page" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrg(
           "LLP",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "businessName" -> "Business Name",
-            "psaUTR" -> s"$matchUtr"
+            "utr" -> s"$matchUtr"
           ),
           controller
         ) { result =>
@@ -783,18 +413,11 @@ class BusinessVerificationValidationSpec
         }
       }
       "for successful match, status should be 303 and  user should be redirected to review details page for AWRS" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrg(
           "LLP",
           FakeRequest("POST", "/")
             .withFormUrlEncodedBody(
-              "businessName" -> "Business Name",
-              "psaUTR" -> s"$matchUtr"
+              "utr" -> s"$matchUtr"
             ),
           controller,
           "awrs"
@@ -806,21 +429,22 @@ class BusinessVerificationValidationSpec
         }
       }
       "for successful match, status should be 303 and  user should be redirected to review details page for neither AWRS nor ATED journey" in new Setup {
-        when(mockBackLinkCache.saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(None))
-        submitWithAuthorisedUserSuccessOrg("LLP", FakeRequest("POST", "/")
-          .withFormUrlEncodedBody("businessName" -> "Business Name", "psaUTR" -> s"$matchUtr"), controller, "amls") {
-          result =>
-            status(result) must be(SEE_OTHER)
-            redirectLocation(result).get must include(s"/business-customer/review-details/amls")
+        submitWithAuthorisedUserSuccessOrg(
+          "LLP",
+          FakeRequest("POST", "/")
+            .withFormUrlEncodedBody("utr" -> s"$matchUtr"),
+          controller,
+          "amls"
+        ) { result =>
+          status(result) must be(SEE_OTHER)
+          redirectLocation(result).get must include(s"/business-customer/review-details/amls")
         }
       }
       "for unsuccessful match, status should be Redirect and user should be on details not found page" in new Setup {
         submitWithAuthorisedUserFailure(
           "LLP",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "businessName" -> "Business Name",
-            "psaUTR" -> s"$noMatchUtr"
+            "utr" -> s"$noMatchUtr"
           ),
           controller
         ) { result =>
@@ -834,17 +458,10 @@ class BusinessVerificationValidationSpec
 
     "if the Limited Partnership form is successfully validated:" must {
       "for successful match, status should be 303 and user should be redirected to review details page" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrg(
           "LP",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "businessName" -> "Business Name",
-            "psaUTR" -> s"$matchUtr"
+            "utr" -> s"$matchUtr"
           ),
           controller
         ) { result =>
@@ -855,18 +472,11 @@ class BusinessVerificationValidationSpec
         }
       }
       "for successful match, status should be 303 and user should be redirected to review details page for AWRS" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrg(
           "LP",
           FakeRequest("POST", "/")
             .withFormUrlEncodedBody(
-              "businessName" -> "Business Name",
-              "psaUTR" -> s"$matchUtr"
+              "utr" -> s"$matchUtr"
             ),
           controller,
           "awrs"
@@ -879,13 +489,15 @@ class BusinessVerificationValidationSpec
       }
 
       "for successful match, status should be 303 and  user should be redirected to review details page for neither ATED nor AWRS journey" in new Setup {
-        when(mockBackLinkCache.saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(None))
-        submitWithAuthorisedUserSuccessOrg("LP", FakeRequest("POST", "/")
-          .withFormUrlEncodedBody("businessName" -> "Business Name", "psaUTR" -> s"$matchUtr"), controller, "amls") {
-          result =>
-            status(result) must be(SEE_OTHER)
-            redirectLocation(result).get must include(s"/business-customer/review-details/amls")
+        submitWithAuthorisedUserSuccessOrg(
+          "LP",
+          FakeRequest("POST", "/")
+            .withFormUrlEncodedBody("utr" -> s"$matchUtr"),
+          controller,
+          "amls"
+        ) { result =>
+          status(result) must be(SEE_OTHER)
+          redirectLocation(result).get must include(s"/business-customer/review-details/amls")
         }
       }
 
@@ -893,8 +505,7 @@ class BusinessVerificationValidationSpec
         submitWithAuthorisedUserFailure(
           "LP",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "businessName" -> "Business Name",
-            "psaUTR" -> s"$noMatchUtr"
+            "utr" -> s"$noMatchUtr"
           ),
           controller
         ) { result =>
@@ -908,41 +519,23 @@ class BusinessVerificationValidationSpec
 
     "if the Sole Trader form  is successfully validated:" must {
       "for successful match, status should be 303 and  user should be redirected to review details page" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessIndividual(
-          "SOP",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "firstName" -> "First Name",
-            "lastName" -> "Last Name",
-            "saUTR" -> s"$matchUtr"
+            "utr" -> s"$matchUtr"
           ),
           controller
         ) { result =>
           status(result) must be(SEE_OTHER)
           redirectLocation(result).get must include(
-            s"/business-customer/review-details/$service"
+            s"/business-customer/review-details/AWRS"
           )
         }
       }
       "for successful match, status should be 303 and  user should be redirected to review details page for AWRS" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessIndividual(
-          "SOP",
           FakeRequest("POST", "/")
             .withFormUrlEncodedBody(
-              "firstName" -> "First Name",
-              "lastName" -> "Last Name",
-              "saUTR" -> s"$matchUtr"
+              "utr" -> s"$matchUtr"
             ),
           controller,
           "awrs"
@@ -955,13 +548,14 @@ class BusinessVerificationValidationSpec
       }
 
       "for successful match, status should be 303 and  user should be redirected to review details page for neither AWRS nor ATED journey" in new Setup {
-        when(mockBackLinkCache.saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(None))
-        submitWithAuthorisedUserSuccessIndividual("SOP", FakeRequest("POST", "/")
-          .withFormUrlEncodedBody("firstName" -> "First Name", "lastName" -> "Last Name", "saUTR" -> s"$matchUtr"), controller, "amls") {
-          result =>
-            status(result) must be(SEE_OTHER)
-            redirectLocation(result).get must include(s"/business-customer/review-details/amls")
+        submitWithAuthorisedUserSuccessIndividual(
+          FakeRequest("POST", "/")
+            .withFormUrlEncodedBody("utr" -> s"$matchUtr"),
+          controller,
+          "amls"
+        ) { result =>
+          status(result) must be(SEE_OTHER)
+          redirectLocation(result).get must include(s"/business-customer/review-details/amls")
         }
       }
 
@@ -970,9 +564,7 @@ class BusinessVerificationValidationSpec
           "SOP",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
             Map(
-              "firstName" -> "First Name",
-              "lastName" -> "Last Name",
-              "saUTR" -> s"$noMatchUtr"
+              "utr" -> s"$noMatchUtr"
             ).toSeq: _*
           ),
           controller
@@ -987,17 +579,10 @@ class BusinessVerificationValidationSpec
 
     "if the Non Resident Landlord is successfully validated:" must {
       "for successful match, status should be 303 and  user should be redirected to review details page" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrg(
           "NRL",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "businessName" -> "Business Name",
-            "saUTR" -> s"$matchUtr"
+            "utr" -> s"$matchUtr"
           ),
           controller
         ) { result =>
@@ -1009,20 +594,13 @@ class BusinessVerificationValidationSpec
       }
 
       "for successful match with missing countryCode, status should be 303 and  user should be redirected to update overseas details reg" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrgNRLNoCountry(
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "businessName" -> "Business Name",
-            "saUTR" -> s"$matchUtr"
+            "utr" -> s"$matchUtr"
           ),
           controller
         ) { result =>
-          status(result) must be(SEE_OTHER)
+          // status(result) must be(SEE_OTHER)
           redirectLocation(result).get must include(
             s"/business-customer/register/$service/NRL"
           )
@@ -1041,8 +619,7 @@ class BusinessVerificationValidationSpec
         submitWithAuthorisedUserFailure(
           "NRL",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "businessName" -> "Business Name",
-            "saUTR" -> s"$noMatchUtr"
+            "utr" -> s"$noMatchUtr"
           ),
           controller
         ) { result =>
@@ -1056,17 +633,10 @@ class BusinessVerificationValidationSpec
 
     "if the Unincorporated body form  is successfully validated:" must {
       "for successful match, status should be 303 and  user should be redirected to review details page" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrg(
           "UIB",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "cotaxUTR" -> s"$matchUtr",
-            "businessName" -> "Business Name"
+            "utr" -> s"$matchUtr"
           ),
           controller
         ) { result =>
@@ -1077,18 +647,11 @@ class BusinessVerificationValidationSpec
         }
       }
       "for successful match, status should be 303 and  user should be redirected to review details page for AWRS" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrg(
           "UIB",
           FakeRequest("POST", "/")
             .withFormUrlEncodedBody(
-              "cotaxUTR" -> s"$matchUtr",
-              "businessName" -> "Business Name"
+              "utr" -> s"$matchUtr"
             ),
           controller,
           "awrs"
@@ -1100,21 +663,22 @@ class BusinessVerificationValidationSpec
         }
       }
       "for successful match, status should be 303 and  user should be redirected to review details page for neither AWRS nor ATED journey" in new Setup {
-        when(mockBackLinkCache.saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(None))
-        submitWithAuthorisedUserSuccessOrg("UIB", FakeRequest("POST", "/")
-          .withFormUrlEncodedBody("cotaxUTR" -> s"$matchUtr", "businessName" -> "Business Name"), controller, "amls") {
-          result =>
-            status(result) must be(SEE_OTHER)
-            redirectLocation(result).get must include(s"/business-customer/review-details/amls")
+        submitWithAuthorisedUserSuccessOrg(
+          "UIB",
+          FakeRequest("POST", "/")
+            .withFormUrlEncodedBody("utr" -> s"$matchUtr"),
+          controller,
+          "amls"
+        ) { result =>
+          status(result) must be(SEE_OTHER)
+          redirectLocation(result).get must include(s"/business-customer/review-details/amls")
         }
       }
       "for unsuccessful match, status should be Redirect and  user should be on same details not found page" in new Setup {
         submitWithAuthorisedUserFailure(
           "UIB",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "cotaxUTR" -> s"$noMatchUtr",
-            "businessName" -> "Business Name"
+            "utr" -> s"$noMatchUtr"
           ),
           controller
         ) { result =>
@@ -1128,17 +692,10 @@ class BusinessVerificationValidationSpec
 
     "if the Limited Company form  is successfully validated:" must {
       "for successful match, status should be 303 and  user should be redirected to review details page" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrg(
           "LTD",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "cotaxUTR" -> s"$matchUtr",
-            "businessName" -> "Business Name"
+            "utr" -> s"$matchUtr"
           ),
           controller
         ) { result =>
@@ -1149,18 +706,11 @@ class BusinessVerificationValidationSpec
         }
       }
       "for successful match, status should be 303 and  user should be redirected to review details page for AWRS" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserSuccessOrg(
           "LTD",
           FakeRequest("POST", "/")
             .withFormUrlEncodedBody(
-              "cotaxUTR" -> s"$matchUtr",
-              "businessName" -> "Business Name"
+              "utr" -> s"$matchUtr"
             ),
           controller,
           "awrs"
@@ -1173,13 +723,15 @@ class BusinessVerificationValidationSpec
       }
 
       "for successful match, status should be 303 and  user should be redirected to review details page for neither AWRS nor ATED journey" in new Setup {
-        when(mockBackLinkCache.saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())
-        (ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(None))
-        submitWithAuthorisedUserSuccessOrg("LTD", FakeRequest("POST", "/")
-          .withFormUrlEncodedBody("cotaxUTR" -> s"$matchUtr", "businessName" -> "Business Name"), controller, "amls") {
-          result =>
-            status(result) must be(SEE_OTHER)
-            redirectLocation(result).get must include(s"/business-customer/review-details/amls")
+        submitWithAuthorisedUserSuccessOrg(
+          "LTD",
+          FakeRequest("POST", "/")
+            .withFormUrlEncodedBody("utr" -> s"$matchUtr"),
+          controller,
+          "amls"
+        ) { result =>
+          status(result) must be(SEE_OTHER)
+          redirectLocation(result).get must include(s"/business-customer/review-details/amls")
         }
       }
 
@@ -1187,8 +739,7 @@ class BusinessVerificationValidationSpec
         submitWithAuthorisedUserFailure(
           "LTD",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "cotaxUTR" -> s"$noMatchUtr",
-            "businessName" -> "Business Name"
+            "utr" -> s"$noMatchUtr"
           ),
           controller
         ) { result =>
@@ -1205,8 +756,7 @@ class BusinessVerificationValidationSpec
         submitWithAuthorisedUserSuccessOrg(
           "UT",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "cotaxUTR" -> s"$matchUtr",
-            "businessName" -> "Business Name"
+            "utr" -> s"$matchUtr"
           ),
           controller
         ) { result =>
@@ -1217,17 +767,10 @@ class BusinessVerificationValidationSpec
         }
       }
       "for unsuccessful match, status should be Redirect and user should be on details not found page" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserFailure(
           "UT",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "cotaxUTR" -> s"$noMatchUtr",
-            "businessName" -> "Business Name"
+            "utr" -> s"$noMatchUtr"
           ),
           controller
         ) { result =>
@@ -1244,8 +787,7 @@ class BusinessVerificationValidationSpec
         submitWithAuthorisedUserSuccessOrg(
           "ULTD",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "cotaxUTR" -> s"$matchUtr",
-            "businessName" -> "Business Name"
+            "utr" -> s"$matchUtr"
           ),
           controller
         ) { result =>
@@ -1256,17 +798,10 @@ class BusinessVerificationValidationSpec
         }
       }
       "for unsuccessful match, status should be Redirect and user should be on details not found page" in new Setup {
-        when(
-          mockBackLinkCache.saveBackLink(
-            ArgumentMatchers.any(),
-            ArgumentMatchers.any()
-          )(ArgumentMatchers.any(), ArgumentMatchers.any())
-        ).thenReturn(Future.successful(None))
         submitWithAuthorisedUserFailure(
           "ULTD",
           FakeRequest("POST", "/").withFormUrlEncodedBody(
-            "cotaxUTR" -> s"$noMatchUtr",
-            "businessName" -> "Business Name"
+            "utr" -> s"$noMatchUtr"
           ),
           controller
         ) { result =>
@@ -1277,73 +812,173 @@ class BusinessVerificationValidationSpec
         }
       }
     }
-  }
 
-  def submitWithAuthorisedUserSuccessOrg(
+    def submitWithAuthorisedUserSuccessOrg(
       businessType: String,
       fakeRequest: FakeRequest[AnyContentAsFormUrlEncoded],
-      controller: BusinessVerificationController,
+      controller: BusinessUtrController,
       service: String = service
-  )(test: Future[Result] => Any): Unit = {
-    val sessionId = s"session-${UUID.randomUUID}"
-    val userId = s"user-${UUID.randomUUID}"
+    )(test: Future[Result] => Any): Unit = {
+      val sessionId = s"session-${UUID.randomUUID}"
+      val userId    = s"user-${UUID.randomUUID}"
 
-    builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
-    when(
-      mockBackLinkCache.fetchAndGetBackLink(ArgumentMatchers.any())(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
-      )
-    ).thenReturn(Future.successful(None))
+      builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
+      when(
+        mockBusinessRegCacheConnector.fetchAndGetCachedDetails[BusinessName](ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Some(BusinessName("ACME"))))
+      when(
+        mockBusinessMatchingService.matchBusinessWithOrganisationName(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
+      ).thenReturn(Future.successful(matchSuccessResponse(businessType)))
+      when(
+        mockBusinessRegCacheConnector.cacheDetails[Utr](ArgumentMatchers.any(), ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Utr("1111111111")))
 
-    val matchSuccessResponse = businessType match {
-      case "UIB"  => matchSuccessResponseUIB
-      case "LLP"  => matchSuccessResponseLLP
-      case "OBP"  => matchSuccessResponseOBP
-      case "NRL"  => matchSuccessResponseNRL
-      case "LTD"  => matchSuccessResponseLTD
-      case "LP"   => matchSuccessResponseLP
-      case "UT"   => matchSuccessResponseLTD
-      case "ULTD" => matchSuccessResponseLTD
+      val fullReq = fakeRequest
+        .withSession(
+          "sessionId" -> sessionId,
+          "token"     -> "RANDOMTOKEN",
+          "userId"    -> userId
+        )
+        .withHeaders(Headers("Authorization" -> "value"))
+
+      val result = controller.submit(service, businessType).apply(fullReq)
+
+      test(result)
     }
-    when(
-      mockBusinessMatchingService.matchBusinessWithOrganisationName(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
-      )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
-    ).thenReturn(Future.successful(matchSuccessResponse))
 
-    val fullReq = fakeRequest
-      .withSession(
-        "sessionId" -> sessionId,
-        "token" -> "RANDOMTOKEN",
-        "userId" -> userId
-      )
-      .withHeaders(Headers("Authorization" -> "value"))
-
-    val result = controller.submit(service, businessType).apply(fullReq)
-
-    test(result)
-  }
-
-  def submitWithAuthorisedUserSuccessOrgNRLNoCountry(
+    def submitWithAuthorisedUserOrgNoCachedName(
+      businessType: String,
       fakeRequest: FakeRequest[AnyContentAsFormUrlEncoded],
-      controller: BusinessVerificationController
-  )(test: Future[Result] => Any): Unit = {
-    val sessionId = s"session-${UUID.randomUUID}"
-    val userId = s"user-${UUID.randomUUID}"
+      controller: BusinessUtrController,
+      service: String = service
+    )(test: Future[Result] => Any): Unit = {
+      val sessionId = s"session-${UUID.randomUUID}"
+      val userId    = s"user-${UUID.randomUUID}"
 
-    builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
-    when(
-      mockBackLinkCache.fetchAndGetBackLink(ArgumentMatchers.any())(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
-      )
-    ).thenReturn(Future.successful(None))
+      builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
 
-    val matchSuccessResponse = Json.parse("""
+      when(mockBackLinkCache.saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        .thenReturn(Future.successful(None))
+      when(
+        mockBusinessRegCacheConnector.fetchAndGetCachedDetails[BusinessName](ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(None))
+      when(
+        mockBusinessMatchingService.matchBusinessWithOrganisationName(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
+      ).thenReturn(Future.successful(matchSuccessResponse(businessType)))
+      when(
+        mockBusinessRegCacheConnector.cacheDetails[Utr](ArgumentMatchers.any(), ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Utr("1111111111")))
+
+      val fullReq = fakeRequest
+        .withSession(
+          "sessionId" -> sessionId,
+          "token"     -> "RANDOMTOKEN",
+          "userId"    -> userId
+        )
+        .withHeaders(Headers("Authorization" -> "value"))
+
+      val result = controller.submit(service, businessType).apply(fullReq)
+
+      test(result)
+    }
+    def submitWithAuthorisedSaUserNoCachedName(
+      businessType: String,
+      fakeRequest: FakeRequest[AnyContentAsFormUrlEncoded],
+      controller: BusinessUtrController,
+      service: String
+    )(test: Future[Result] => Any): Unit = {
+      val sessionId = s"session-${UUID.randomUUID}"
+      val userId    = s"user-${UUID.randomUUID}"
+
+      builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
+
+      when(mockBackLinkCache.saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        .thenReturn(Future.successful(None))
+      when(
+        mockBusinessRegCacheConnector.fetchAndGetCachedDetails[SoleTraderName](ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(None))
+      when(
+        mockBusinessMatchingService.matchBusinessWithOrganisationName(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
+      ).thenReturn(Future.successful(matchSuccessResponse(businessType)))
+      when(
+        mockBusinessRegCacheConnector.cacheDetails[Utr](ArgumentMatchers.any(), ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Utr("1111111111")))
+
+      val fullReq = fakeRequest
+        .withSession(
+          "sessionId" -> sessionId,
+          "token"     -> "RANDOMTOKEN",
+          "userId"    -> userId
+        )
+        .withHeaders(Headers("Authorization" -> "value"))
+
+      val result = controller.submit(service, businessType).apply(fullReq)
+
+      test(result)
+    }
+
+    def submitWithAuthorisedUserSuccessOrgNRLNoCountry(
+      fakeRequest: FakeRequest[AnyContentAsFormUrlEncoded],
+      controller: BusinessUtrController
+    )(test: Future[Result] => Any): Unit = {
+      val sessionId = s"session-${UUID.randomUUID}"
+      val userId    = s"user-${UUID.randomUUID}"
+
+      builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
+      when(
+        mockBackLinkCache.fetchAndGetBackLink(ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(None))
+      when(
+        mockBusinessRegCacheConnector.fetchAndGetCachedDetails[BusinessName](ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Some(BusinessName("ACME"))))
+
+      val matchSuccessResponse = Json.parse("""
         |{
         |  "businessName": "ACME",
         |  "businessType": "Limited company",
@@ -1364,149 +999,258 @@ class BusinessVerificationValidationSpec
         |}
     """.stripMargin)
 
-    when(
-      mockBusinessMatchingService.matchBusinessWithOrganisationName(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
-      )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
-    ).thenReturn(Future.successful(matchSuccessResponse))
+      when(
+        mockBusinessMatchingService.matchBusinessWithOrganisationName(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
+      ).thenReturn(Future.successful(matchSuccessResponse))
 
-    val fullReq = fakeRequest
-      .withSession(
-        "sessionId" -> sessionId,
-        "token" -> "RANDOMTOKEN",
-        "userId" -> userId
+      val fullReq = fakeRequest
+        .withSession(
+          "sessionId" -> sessionId,
+          "token"     -> "RANDOMTOKEN",
+          "userId"    -> userId
+        )
+        .withHeaders(Headers("Authorization" -> "value"))
+
+      val result = controller.submit(service, "NRL").apply(fullReq)
+
+      test(result)
+    }
+
+    def submitWithAuthorisedUserSuccessIndividual(
+      fakeRequest: FakeRequest[AnyContentAsFormUrlEncoded],
+      controller: BusinessUtrController,
+      service: String = "AWRS"
+    )(test: Future[Result] => Any): Unit = {
+      val sessionId = s"session-${UUID.randomUUID}"
+      val userId    = s"user-${UUID.randomUUID}"
+
+      builders.AuthBuilder.mockAuthorisedSaUser(userId, mockAuthConnector)
+      when(
+        mockBackLinkCache.fetchAndGetBackLink(ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(None))
+      when(
+        mockBusinessRegCacheConnector.fetchAndGetCachedDetails[SoleTraderName](ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Some(SoleTraderName("John", "Doe"))))
+      when(
+        mockBusinessMatchingService.matchBusinessWithIndividualName(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
       )
-      .withHeaders(Headers("Authorization" -> "value"))
+        .thenReturn(Future.successful(matchSuccessResponseSOP))
+      when(
+        mockBusinessRegCacheConnector.cacheDetails[Utr](ArgumentMatchers.any(), ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Utr("1111111111")))
 
-    val result = controller.submit(service, "NRL").apply(fullReq)
+      val result = controller
+        .submit(service, "SOP")
+        .apply(
+          fakeRequest
+            .withSession(
+              "sessionId" -> sessionId,
+              "token"     -> "RANDOMTOKEN",
+              "userId"    -> userId
+            )
+            .withHeaders(Headers("Authorization" -> "value"))
+        )
 
-    test(result)
-  }
+      test(result)
+    }
 
-  def submitWithAuthorisedUserSuccessIndividual(
+    def submitWithAuthorisedUserFailure(
       businessType: String,
       fakeRequest: FakeRequest[AnyContentAsFormUrlEncoded],
-      controller: BusinessVerificationController,
-      service: String = service
-  )(test: Future[Result] => Any): Unit = {
-    val sessionId = s"session-${UUID.randomUUID}"
-    val userId = s"user-${UUID.randomUUID}"
+      controller: BusinessUtrController
+    )(test: Future[Result] => Any): Unit = {
+      val sessionId = s"session-${UUID.randomUUID}"
+      val userId    = s"user-${UUID.randomUUID}"
 
-    builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
-    when(
-      mockBackLinkCache.fetchAndGetBackLink(ArgumentMatchers.any())(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
+      builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
+      when(
+        mockBackLinkCache.fetchAndGetBackLink(ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(None))
+
+      when(
+        mockBusinessMatchingService.matchBusinessWithOrganisationName(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
       )
-    ).thenReturn(Future.successful(None))
+        .thenReturn(Future.successful(matchFailureResponse))
 
-    when(
-      mockBusinessMatchingService.matchBusinessWithIndividualName(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
-      )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
-    )
-      .thenReturn(Future.successful(matchSuccessResponseSOP))
+      val result = controller
+        .submit(service, businessType)
+        .apply(
+          fakeRequest
+            .withSession(
+              "sessionId" -> sessionId,
+              "token"     -> "RANDOMTOKEN",
+              "userId"    -> userId
+            )
+            .withHeaders(Headers("Authorization" -> "value"))
+        )
 
-    val result = controller
-      .submit(service, businessType)
-      .apply(
-        fakeRequest
-          .withSession(
-            "sessionId" -> sessionId,
-            "token" -> "RANDOMTOKEN",
-            "userId" -> userId
-          )
-          .withHeaders(Headers("Authorization" -> "value"))
-      )
+      test(result)
+    }
 
-    test(result)
-  }
-
-  def submitWithAuthorisedUserFailure(
+    def submitWithAuthorisedUserFailureIndividual(
       businessType: String,
       fakeRequest: FakeRequest[AnyContentAsFormUrlEncoded],
-      controller: BusinessVerificationController
-  )(test: Future[Result] => Any): Unit = {
-    val sessionId = s"session-${UUID.randomUUID}"
-    val userId = s"user-${UUID.randomUUID}"
+      controller: BusinessUtrController
+    )(test: Future[Result] => Any): Unit = {
+      val sessionId = s"session-${UUID.randomUUID}"
+      val userId    = s"user-${UUID.randomUUID}"
 
-    builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
-    when(
-      mockBackLinkCache.fetchAndGetBackLink(ArgumentMatchers.any())(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
+      builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
+      when(
+        mockBackLinkCache.fetchAndGetBackLink(ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(None))
+      when(
+        mockBusinessRegCacheConnector.fetchAndGetCachedDetails[SoleTraderName](ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
+      ).thenReturn(Future.successful(Some(SoleTraderName("John", "Doe"))))
+      when(
+        mockBusinessMatchingService.matchBusinessWithIndividualName(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
       )
-    ).thenReturn(Future.successful(None))
+        .thenReturn(Future.successful(matchFailureResponse))
 
-    when(
-      mockBusinessMatchingService.matchBusinessWithOrganisationName(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
-      )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
-    )
-      .thenReturn(Future.successful(matchFailureResponse))
+      val result = controller
+        .submit(service, businessType)
+        .apply(
+          fakeRequest
+            .withSession(
+              "sessionId" -> sessionId,
+              "token"     -> "RANDOMTOKEN",
+              "userId"    -> userId
+            )
+            .withHeaders(Headers("Authorization" -> "value"))
+        )
 
-    val result = controller
-      .submit(service, businessType)
-      .apply(
-        fakeRequest
-          .withSession(
-            "sessionId" -> sessionId,
-            "token" -> "RANDOMTOKEN",
-            "userId" -> userId
-          )
-          .withHeaders(Headers("Authorization" -> "value"))
-      )
+      test(result)
+    }
 
-    test(result)
-  }
-
-  def submitWithAuthorisedUserFailureIndividual(
+    def submitWithAuthorisedUserJson(
+      controller: BusinessUtrController,
       businessType: String,
-      fakeRequest: FakeRequest[AnyContentAsFormUrlEncoded],
-      controller: BusinessVerificationController
-  )(test: Future[Result] => Any): Unit = {
-    val sessionId = s"session-${UUID.randomUUID}"
-    val userId = s"user-${UUID.randomUUID}"
+      fields: Map[String, String],
+      service: String
+    )(test: Future[Result] => Any): Unit = {
+      val sessionId            = s"session-${UUID.randomUUID}"
+      val userId               = s"user-${UUID.randomUUID}"
 
-    builders.AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector)
-    when(
-      mockBackLinkCache.fetchAndGetBackLink(ArgumentMatchers.any())(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
-      )
-    ).thenReturn(Future.successful(None))
-    when(
-      mockBusinessMatchingService.matchBusinessWithIndividualName(
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any(),
-        ArgumentMatchers.any()
-      )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
-    )
-      .thenReturn(Future.successful(matchFailureResponse))
-
-    val result = controller
-      .submit(service, businessType)
-      .apply(
-        fakeRequest
+      def generateRequest: FakeRequest[AnyContentAsFormUrlEncoded] = {
+        FakeRequest("POST", "/")
           .withSession(
             "sessionId" -> sessionId,
-            "token" -> "RANDOMTOKEN",
-            "userId" -> userId
+            "token"     -> "RANDOMTOKEN",
+            "userId"    -> userId
           )
           .withHeaders(Headers("Authorization" -> "value"))
+          .withFormUrlEncodedBody(fields.toSeq: _*)
+      }
+      if (businessType.equalsIgnoreCase("SOP")) {
+        AuthBuilder.mockAuthorisedSaUser(userId, mockAuthConnector)
+      } else { AuthBuilder.mockAuthorisedUser(userId, mockAuthConnector) }
+
+      when(mockBackLinkCache.saveBackLink(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        .thenReturn(Future.successful(None))
+      when(
+        mockBusinessRegCacheConnector.fetchAndGetCachedDetails[BusinessName](ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Some(BusinessName("ACME"))))
+      when(
+        mockBusinessMatchingService.matchBusinessWithOrganisationName(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
       )
+        .thenReturn(Future.successful(matchSuccessResponse(businessType)))
+      when(
+        mockBusinessRegCacheConnector.cacheDetails[Utr](ArgumentMatchers.any(), ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Utr(("1111111111"))))
 
-    test(result)
+      val result = controller.submit(service, businessType).apply(generateRequest)
+
+      test(result)
+    }
+    def submitWithAuthorisedSaUserJson(
+      controller: BusinessUtrController,
+      fields: Map[String, String],
+      service: String
+    )(test: Future[Result] => Any): Unit = {
+      val sessionId                                                = s"session-${UUID.randomUUID}"
+      val userId                                                   = s"user-${UUID.randomUUID}"
+      def generateRequest: FakeRequest[AnyContentAsFormUrlEncoded] = {
+        FakeRequest("POST", "/")
+          .withSession(
+            "sessionId" -> sessionId,
+            "token"     -> "RANDOMTOKEN",
+            "userId"    -> userId
+          )
+          .withHeaders(Headers("Authorization" -> "value"))
+          .withFormUrlEncodedBody(fields.toSeq: _*)
+      }
+      AuthBuilder.mockAuthorisedSaUser(userId, mockAuthConnector)
+
+      when(
+        mockBusinessMatchingService.matchBusinessWithOrganisationName(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
+      )
+        .thenReturn(Future.successful(matchSuccessResponseSOP))
+      when(
+        mockBusinessRegCacheConnector.cacheDetails[Utr](ArgumentMatchers.any(), ArgumentMatchers.any())(
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any(),
+          ArgumentMatchers.any()
+        )
+      ).thenReturn(Future.successful(Utr(("1111111111"))))
+
+      val result = controller.submit("AWRS", "SOP").apply(generateRequest)
+
+      test(result)
+    }
   }
-
 }

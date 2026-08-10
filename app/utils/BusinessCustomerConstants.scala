@@ -34,4 +34,7 @@ object BusinessCustomerConstants {
   val NrlFormId = "NRL_Details"
   val UpdateNotRegisterId = "Update_No_Register"
   val CacheRegistrationDetails = "Cache_Registration_Details_"
+  val CacheBusinessNameDataRegistrationDetails = "Cache_Business_Name_Data_Registration_Details_"
+  val CacheBusinessUtrDataRegistrationDetails = "Cache_Business_Utr_Data_Registration_Details_"
+
 }

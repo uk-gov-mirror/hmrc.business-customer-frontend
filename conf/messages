@@ -8,7 +8,6 @@ bc.screen-reader.section = This section is:
 bc.screen-reader.name = this is for:
 
 bc.ated.serviceName = Register for ATED
-bc.ATED.serviceName = Register for ATED
 bc.awrs.serviceName = Register as an alcohol wholesaler or producer
 bc.amls.serviceName = Anti Money Laundering Supervision
 bc.fhdds.serviceName = Apply for the Fulfilment House Due Diligence Scheme
@@ -44,7 +43,6 @@ business-review.sole-trader.text = If you are not registered with Companies Hous
 business-review.sole-trader.text.link = tell HMRC about a change to your personal details
 business-review.check-agency.text = You are setting up your agency. These should be your company details not your client’s.
 
-
 bc.business-verification.cancel = Cancel
 
 bc.business-verification.text = {0} account registration
@@ -61,7 +59,9 @@ bc.business-verification-selected-user-header = Your business details
 bc.business-verification-selected-user-SOP-header = Your Self Assessment details
 bc.business-verification-selected-user-NRL-header = Your Self Assessment details
 bc.business-verification-selected-agent-header = Your agency details
+bc.business-verification-utr-selected-agent-header = Your agency UTR details
 bc.business-verification-lede = We will attempt to match your details against information we currently hold.
+bc.business-verification-text-1 = Before you continue, check this business is not already registered for money laundering supervision. A business can only register once. HMRC can only check this after you finish registration.
 bc.business-verification-lede.nrl = Enter your Self Assessment details and we will attempt to match them against information we currently hold.
 bc.business-verification.NUK = I have an overseas company without a UK Unique Taxpayer Reference
 bc.business-verification.agent.NUK = I have an overseas company
@@ -85,16 +85,37 @@ bc.business-verification.GROUP = Group
 bc.business-verification.radio-legend = What type of business is it?
 bc.business-verification.firstNameField = First name
 bc.business-verification.lastNameField = Last name
+bc.business-verification.coUTR = Your Corporation Tax Unique Taxpayer Reference (UTR)
+bc.business-verification.coUTR.short = What is your Corporation Tax UTR?
+bc.business-verification.genericUTR.short = What is your {0} Tax UTR?
+bc.business-utr.paragraph.registered = Make sure you do not enter a UTR that is already registered for {0}. HMRC can only check this after you finish registration.
+bc.business-utr.paragraph.registered.awrs = AWRS
+bc.business-utr.paragraph.registered.ated = ATED
+bc.business-utr.paragraph.registered.fhdds = Fulfilment House Due Diligence Scheme
+bc.business-utr.paragraph.registered.amls = anti-money laundering supervision
+bc.business-utr.paragraph.find.corporation = You can find your UTR on tax returns and other letters about Corporation Tax. It might be called ‘reference’, ‘UTR’ or ‘official use’.
+bc.business-utr.paragraph.find.partnership = You can find your UTR in your Business Tax Account, the HMRC app or on tax returns and other documents from HMRC. It might be called ‘reference’, ‘UTR’ or ‘official use’.
+bc.business-utr.paragraph.find.soleTrader = You can find your UTR in your Personal Tax Account, the HMRC app or on tax returns and other documents from HMRC. It might be called ‘reference’, ‘UTR’ or ‘official use’.
+
+bc.business-utr.paragraph.find = You can find it in your Business Tax Account, the HMRC app or on tax returns and other documents from HMRC. It might be called ‘reference’, ‘UTR’ or ‘official use’.
 bc.business-verification.coUTRField = What is your Corporation Tax Unique Taxpayer Reference (UTR)?
+bc.business-verification.psaUTR = Your Partnership Unique Taxpayer Reference (UTR)
 bc.business-verification.coUTRFieldpsaUTR = What is your Partnership Self Assessment Unique Taxpayer Reference (UTR)?
+bc.business-verification.coUTRFieldpsaUTR.short = What is your Partnership Self Assessment Unique Taxpayer Reference (UTR)?
 bc.business-verification.coUTRFieldsaUTR = What is your Self Assessment Unique Taxpayer Reference (UTR)?
-bc.business-verification.businessNamefield = What is your registered company name?
-bc.business-verification.partnerNameField = What is your partnership name?
+bc.business-verification.saUTR = Your Self Assessment Unique Taxpayer Reference (UTR)
+bc.business-verification.coUTRFieldsaUTR.short = What is your Self Assessment UTR?
+bc.business-verification.businessNameField = What is your registered company name?
+bc.business-verification.partnershipNameField = What is your partnership name?
+bc.business-verification.SoleNameField = What is your name?
 bc.business-verification.partnerNameHint = This is the name that you registered with HMRC
 bc.business-verification.registered-name.hint = This is the registered name on your incorporation certificate.
 
-bc.business-verification.utr.corporationUTR = UTRs are 10 digits long, for example, ‘1234567890’. Some UTRs may appear as 13 digits, for example, ‘1234567890123’. If so, enter only the last 10 digits.
-bc.business-verification.utr.corporationUTRLink = Find your UTR number (opens in new tab)
+bc.business-verification.utr.lengthHint= Your UTR can be 10 or 13 digits long.
+bc.business-verification.utr.amls.UTRLinkText = Find your UTR number (opens in new tab)
+bc.business-verification.utr.corporationUTRLinkText = Ask for a copy of your Corporation Tax UTR (opens in new tab)
+bc.business-verification.utr.UTRLinkText = Get more help to find your UTR (opens in new tab)
+bc.business-verification.utr.link = https://www.gov.uk/find-utr-number
 
 bc.business-verification.utr.selfAssessmentUTR = Your UTR can be 10 or 13 digits long. You can find it in your Personal Tax Account, the HMRC app or on tax returns and other documents from HMRC. It might be called ‘reference’, ‘UTR’ or ‘official use’.
 bc.business-verification.utr.selfAssessmentUTRLink = How to find your UTR (opens in new tab)
@@ -103,12 +124,14 @@ bc.business-verification.back = Back
 bc.business-verification.submit = Register your agency
 bc.business-verification.submit.client = Continue
 
+bc.business-verification.coUTR.header = Your Corporation Tax Unique Taxpayer Reference (UTR)
+
 bc.business-verification-error.firstname = Enter a first name
 bc.business-verification-error.firstname.length = A first name cannot be more than 40 characters
 bc.business-verification-error.surname = Enter a last name
 bc.business-verification-error.surname.length = A last name cannot be more than 40 characters
-bc.business-verification-error.sautr = Enter a Self Assessment Unique Taxpayer Reference (UTR)
-bc.business-verification-error.sautr.length = Self Assessment Unique Taxpayer Reference must be 10 digits. If it is 13 digits only enter the last 10
+bc.business-verification-error.saUtr = Enter a Self Assessment Unique Taxpayer Reference (UTR)
+bc.business-verification-error.saUtr.length = Self Assessment Unique Taxpayer Reference must be 10 digits. If it is 13 digits only enter the last 10
 bc.business-verification-error.utr = Unique Taxpayer Reference must be 10 digits. If it is 13 digits only enter the last 10.
 bc.business-verification-error.businessName = Enter a registered company name
 bc.business-verification-error.businessName.length = A business name cannot be more than 105 characters
@@ -117,8 +140,8 @@ bc.business-verification-error.businessPartnerName.length = A partnership busine
 
 bc.business-verification-error.cotaxutr = Enter a Corporation Tax Unique Taxpayer Reference
 bc.business-verification-error.cotaxutr.length = Enter a 10-digit Unique Taxpayer Reference (UTR). If your UTR is 13 digits, enter only the last 10 digits
-bc.business-verification-error.psautr = Enter a Partnership Self Assessment Unique Taxpayer Reference
-bc.business-verification-error.psautr.length = Partnership Self Assessment Unique Taxpayer Reference must be 10 digits. If it is 13 digits only enter the last 10
+bc.business-verification-error.psaUtr = Enter a Partnership Self Assessment Unique Taxpayer Reference
+bc.business-verification-error.psaUtr.length = Partnership Self Assessment Unique Taxpayer Reference must be 10 digits. If it is 13 digits only enter the last 10
 bc.business-verification-error.invalidSAUTR = The Self Assessment Unique Taxpayer Reference is not valid
 bc.business-verification-error.invalidCOUTR = The Corporation Tax Unique Taxpayer Reference is not valid
 bc.business-verification-error.invalidPSAUTR = The Partnership Self Assessment Unique Taxpayer Reference is not valid
@@ -133,8 +156,8 @@ bc.business-registration-error.wrong.role.header = You must be logged in as an a
 bc.business-registration-error.wrong.role.title = You must be logged in as an administrator to submit an ATED return
 bc.business-registration-error.wrong.role.message = If you require access you need to <a href="https://myaccount.gateway.gov.uk/Pages/Credentials/Admin/List.aspx" rel="noreferrer noopener" target="_blank">add administrators to your account in Government Gateway.</a>
 
-bc.business-verification-error.registeredName.length = The registered company name cannot be more than 105 characters
-bc.business-verification-error.registeredPartnerName.length = The registered partnership name cannot be more than 105 characters
+bc.business-verification-error.businessName.length = The registered company name cannot be more than 105 characters
+bc.business-verification-error.businessPartnerName.length = The registered partnership name cannot be more than 105 characters
 
 ##### UNAUTHORISED PAGE
 
@@ -183,7 +206,6 @@ bc.business-registration.submit = Continue
 bc.business-registration.cancel = Cancel
 bc.business-registration.back = Back
 bc.business-registration.search = Match
-
 bc.business-registration-error.businessName = Enter a business name
 bc.business-registration-error.line_1 = Enter address line 1
 bc.business-registration-error.line_2 = Enter address line 2

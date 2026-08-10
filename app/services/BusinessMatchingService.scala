@@ -17,14 +17,13 @@
 package services
 
 import connectors.{BusinessMatchingConnector, DataCacheConnector}
-
-import javax.inject.Inject
-import models.{Individual, _}
+import models._
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.BusinessCustomerConstants.{CorporateBody, Partnership, SoleTrader}
 import utils.SessionUtils
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class BusinessMatchingService @Inject()(val businessMatchingConnector: BusinessMatchingConnector,

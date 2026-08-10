@@ -25,55 +25,23 @@ import play.api.libs.json.{Format, Json}
 
 import scala.util.matching.Regex
 
+case class BusinessName(businessName: String)
 
-case class SoleTraderMatch(firstName: String, lastName: String, saUTR: String)
-
-object SoleTraderMatch {
-  implicit val formats: Format[SoleTraderMatch] = Json.format[SoleTraderMatch]
+object BusinessName {
+  implicit val formats: Format[BusinessName] = Json.format[BusinessName]
 }
 
+case class SoleTraderName(firstName: String, lastName: String)
 
-case class LimitedCompanyMatch(businessName: String, cotaxUTR: String)
-
-object LimitedCompanyMatch {
-  implicit val formats: Format[LimitedCompanyMatch] = Json.format[LimitedCompanyMatch]
+object SoleTraderName {
+  implicit val formats: Format[SoleTraderName] = Json.format[SoleTraderName]
 }
 
+case class Utr(utr: String)
 
-case class NonResidentLandlordMatch(businessName: String, saUTR: String)
-
-object NonResidentLandlordMatch {
-  implicit val formats: Format[NonResidentLandlordMatch] = Json.format[NonResidentLandlordMatch]
+object Utr {
+  implicit val formats: Format[Utr] = Json.format[Utr]
 }
-
-
-case class UnincorporatedMatch(businessName: String, cotaxUTR: String)
-
-object UnincorporatedMatch {
-  implicit val formats: Format[UnincorporatedMatch] = Json.format[UnincorporatedMatch]
-}
-
-
-case class OrdinaryBusinessPartnershipMatch(businessName: String, psaUTR: String)
-
-object OrdinaryBusinessPartnershipMatch {
-  implicit val formats: Format[OrdinaryBusinessPartnershipMatch] = Json.format[OrdinaryBusinessPartnershipMatch]
-}
-
-
-case class LimitedLiabilityPartnershipMatch(businessName: String, psaUTR: String)
-
-object LimitedLiabilityPartnershipMatch {
-  implicit val formats: Format[LimitedLiabilityPartnershipMatch] = Json.format[LimitedLiabilityPartnershipMatch]
-}
-
-
-case class LimitedPartnershipMatch(businessName: String, psaUTR: String)
-
-object LimitedPartnershipMatch {
-  implicit val formats: Format[LimitedPartnershipMatch] = Json.format[LimitedPartnershipMatch]
-}
-
 
 case class BusinessType(businessType: Option[String] = None, isSaAccount: Boolean, isOrgAccount: Boolean)
 
@@ -81,21 +49,10 @@ object BusinessType {
   implicit val formats: Format[BusinessType] = Json.format[BusinessType]
 }
 
-
-case class BusinessDetails(businessType: String,
-                           soleTrader: Option[SoleTraderMatch],
-                           ltdCompany: Option[LimitedCompanyMatch],
-                           uibCompany: Option[UnincorporatedMatch],
-                           obpCompany: Option[OrdinaryBusinessPartnershipMatch],
-                           llpCompany: Option[LimitedLiabilityPartnershipMatch],
-                           lpCompany: Option[LimitedPartnershipMatch],
-                           nrlCompany: Option[NonResidentLandlordMatch])
-
-object BusinessDetails {
-  implicit val formats: Format[BusinessDetails] = Json.format[BusinessDetails]
-}
-
 object BusinessVerificationForms extends BCUtils {
+  val selfAssessment: Seq[String] = Seq("SOP", "NRL")
+  val corporations: Seq[String]   = Seq("LTD", "UT", "ULTD", "UIB")
+  val partnerships: Seq[String]   = Seq("OBP", "LP", "LLP")
 
   override val environment: Environment = Environment.simple()
 
@@ -127,125 +84,69 @@ object BusinessVerificationForms extends BCUtils {
     }
   }
 
-  val businessTypeForm: Form[BusinessType] = Form(mapping(
+  val businessTypeForm: Form[BusinessType] ={
+    Form(mapping(
     "businessType" -> optional(text).verifying("bc.business-verification-error.not-selected", x => x.isDefined),
     "isSaAccount" -> boolean,
     "isOrgAccount" -> boolean
   )(BusinessType.apply)(BusinessType.unapply)
   )
+}
 
-  val soleTraderForm: Form[SoleTraderMatch] = Form(mapping(
+  def businessName(businessType: String): Form[BusinessName] ={
+    val businessTypeKey: String = if (partnerships.contains(businessType)) "businessPartner" else "business"
+    Form(mapping(
+      "businessName" -> text
+        .verifying(s"bc.business-verification-error.${businessTypeKey}Name", x => x.trim.length > length0)
+        .verifying(s"bc.business-verification-error.${businessTypeKey}Name.length", x => x.isEmpty || (x.nonEmpty && x.length <= length105))
+    )(BusinessName.apply)(BusinessName.unapply))}
+
+  val soleTraderNameForm: Form[SoleTraderName] = Form(mapping(
     "firstName" -> text
       .verifying("bc.business-verification-error.firstname", x => x.trim.length > length0)
       .verifying("bc.business-verification-error.firstname.length", x => x.isEmpty || (x.nonEmpty && x.length <= length40)),
     "lastName" -> text
       .verifying("bc.business-verification-error.surname", x => x.trim.length > length0)
-      .verifying("bc.business-verification-error.surname.length", x => x.isEmpty || (x.nonEmpty && x.length <= length40)),
-    "saUTR" -> text
-      .verifying("bc.business-verification-error.sautr", x => x.replaceAll(" ", "").length > length0)
-      .verifying("bc.business-verification-error.sautr.length", x => {
+      .verifying("bc.business-verification-error.surname.length", x => x.isEmpty || (x.nonEmpty && x.length <= length40))
+  )(SoleTraderName.apply)(SoleTraderName.unapply))
+
+  val saUtr: Form[Utr] = Form(mapping(
+    "utr" -> text
+      .verifying("bc.business-verification-error.saUtr", x => x.replaceAll(" ", "").length > length0)
+      .verifying("bc.business-verification-error.saUtr.length", x => {
         val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches("""^[0-9]{10}$"""))}
+        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches(utrRegex.regex))}
       )
       .verifying("bc.business-verification-error.invalidSAUTR", x => {
         val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches("""^[0-9]{10}$"""))
+        trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches(utrRegex.regex))
       })
-  )(SoleTraderMatch.apply)(SoleTraderMatch.unapply))
+  )(Utr.apply)(Utr.unapply))
 
-  val limitedCompanyForm: Form[LimitedCompanyMatch] = Form(mapping(
-    "businessName" -> text
-      .verifying("bc.business-verification-error.businessName", x => x.trim.length > length0)
-      .verifying("bc.business-verification-error.registeredName.length", x => x.isEmpty || (x.nonEmpty && x.length <= length105)),
-    "cotaxUTR" -> text
+  val cotaxUtr: Form[Utr] = Form(mapping(
+    "utr" -> text
       .verifying("bc.business-verification-error.cotaxutr", x => x.replaceAll(" ", "").length > length0)
       .verifying("bc.business-verification-error.cotaxutr.length", x => {
         val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches("""^[0-9]{10}$"""))}
+        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches(utrRegex.regex))}
       )
       .verifying("bc.business-verification-error.invalidCOUTR", x => {
-        val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches("""^[0-9]{10}$"""))
-      })
-  )(LimitedCompanyMatch.apply)(LimitedCompanyMatch.unapply))
+          val trimmedString = x.replaceAll(" ", "")
+          trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches(utrRegex.regex))
+        })
+  )(Utr.apply)(Utr.unapply))
 
-  val nonResidentLandlordForm: Form[NonResidentLandlordMatch] = Form(mapping(
-    "businessName" -> text
-      .verifying("bc.business-verification-error.businessName", x => x.trim.length > length0)
-      .verifying("bc.business-verification-error.registeredName.length", x => x.isEmpty || (x.nonEmpty && x.length <= length105)),
-    "saUTR" -> text
-      .verifying("bc.business-verification-error.sautr", x => x.replaceAll(" ", "").length > length0)
-      .verifying("bc.business-verification-error.sautr.length", x => {
+  val psaUtr: Form[Utr] = Form(mapping(
+    "utr" -> text
+      .verifying("bc.business-verification-error.psaUtr", x => x.replaceAll(" ", "").length > length0)
+      .verifying("bc.business-verification-error.psaUtr.length", x => {
         val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches("""^[0-9]{10}$"""))}
-      )
-      .verifying("bc.business-verification-error.invalidSAUTR", x => {
-        val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches("""^[0-9]{10}$"""))
-      })
-  )(NonResidentLandlordMatch.apply)(NonResidentLandlordMatch.unapply))
-
-  val unincorporatedBodyForm: Form[UnincorporatedMatch] = Form(mapping(
-    "businessName" -> text
-      .verifying("bc.business-verification-error.businessName", x => x.trim.length > length0)
-      .verifying("bc.business-verification-error.registeredName.length", x => x.isEmpty || (x.nonEmpty && x.length <= length105)),
-    "cotaxUTR" -> text
-      .verifying("bc.business-verification-error.cotaxutr", x => x.replaceAll(" ", "").length > length0)
-      .verifying("bc.business-verification-error.cotaxutr.length", x => {
-        val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches("""^[0-9]{10}$"""))}
-      )
-      .verifying("bc.business-verification-error.invalidCOUTR", x => {
-        val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches("""^[0-9]{10}$"""))
-      })
-  )(UnincorporatedMatch.apply)(UnincorporatedMatch.unapply))
-
-  val ordinaryBusinessPartnershipForm: Form[OrdinaryBusinessPartnershipMatch] = Form(mapping(
-    "businessName" -> text
-      .verifying("bc.business-verification-error.businessPartnerName", x => x.trim.length > length0)
-      .verifying("bc.business-verification-error.registeredPartnerName.length", x => x.isEmpty || (x.nonEmpty && x.length <= length105)),
-    "psaUTR" -> text
-      .verifying("bc.business-verification-error.psautr", x => x.replaceAll(" ", "").length > length0)
-      .verifying("bc.business-verification-error.psautr.length", x => {
-        val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches("""^[0-9]{10}$"""))}
+        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches(utrRegex.regex))}
       )
       .verifying("bc.business-verification-error.invalidPSAUTR", x => {
         val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches("""^[0-9]{10}$"""))
+        trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches(utrRegex.regex))
       })
-  )(OrdinaryBusinessPartnershipMatch.apply)(OrdinaryBusinessPartnershipMatch.unapply))
-
-  val limitedLiabilityPartnershipForm: Form[LimitedLiabilityPartnershipMatch] = Form(mapping(
-    "businessName" -> text
-      .verifying("bc.business-verification-error.businessName", x => x.trim.length > length0)
-      .verifying("bc.business-verification-error.registeredName.length", x => x.isEmpty || (x.nonEmpty && x.length <= length105)),
-    "psaUTR" -> text
-      .verifying("bc.business-verification-error.psautr", x => x.replaceAll(" ", "").length > length0)
-      .verifying("bc.business-verification-error.psautr.length", x => {
-        val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches("""^[0-9]{10}$"""))}
-      )
-      .verifying("bc.business-verification-error.invalidPSAUTR", x => {
-        val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches("""^[0-9]{10}$"""))
-      })
-  )(LimitedLiabilityPartnershipMatch.apply)(LimitedLiabilityPartnershipMatch.unapply))
-  val limitedPartnershipForm: Form[LimitedPartnershipMatch] = Form(mapping(
-    "businessName" -> text
-      .verifying("bc.business-verification-error.businessPartnerName", x => x.trim.length > length0)
-      .verifying("bc.business-verification-error.registeredPartnerName.length", x => x.isEmpty || (x.nonEmpty && x.length <= length105)),
-    "psaUTR" -> text
-      .verifying("bc.business-verification-error.psautr", x => x.replaceAll(" ", "").length > length0)
-      .verifying("bc.business-verification-error.psautr.length", x => {
-        val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (trimmedString.nonEmpty && trimmedString.matches("""^[0-9]{10}$"""))}
-      )
-      .verifying("bc.business-verification-error.invalidPSAUTR", x => {
-        val trimmedString = x.replaceAll(" ", "")
-        trimmedString.isEmpty || (validateUTR(trimmedString) || !trimmedString.matches("""^[0-9]{10}$"""))
-      })
-  )(LimitedPartnershipMatch.apply)(LimitedPartnershipMatch.unapply))
+  )(Utr.apply)(Utr.unapply))
 
 }

@@ -3,10 +3,15 @@
 GET         /assets/*file                                                       controllers.Assets.versioned(path="/public", file: Asset)
 
 GET         /business-verification/:service                                     controllers.BusinessVerificationController.businessVerification(service: String)
-
-GET         /business-verification/:service/businessForm/:businessType          controllers.BusinessVerificationController.businessForm(service: String, businessType: String)
 POST        /business-verification/:service/continue                            controllers.BusinessVerificationController.continue(service: String)
-POST        /business-verification/:service/submit/:businessType                controllers.BusinessVerificationController.submit(service: String, businessType: String)
+
+GET         /business-verification/:service/businessForm/:businessType          controllers.BusinessNameController.onPageLoad(service: String, businessType: String)
+POST        /business-verification/:service/businessForm/:businessType/submit   controllers.BusinessNameController.submit(service: String, businessType: String)
+
+GET         /business-verification/:service/businessFormUtr/:businessType         controllers.BusinessUtrController.onPageLoad(service: String, businessType: String)
+POST        /business-verification/:service/businessFormUtr/:businessType/submit  controllers.BusinessUtrController.submit(service: String, businessType: String)
+
+POST        /business-verification/:service/submit/:businessType                controllers.BusinessUtrController.submit(service: String, businessType: String)
 GET         /business-verification/:service/detailsNotFound/:businessType       controllers.BusinessVerificationController.detailsNotFound(service: String, businessType: String)
 
 GET         /review-details/:service                                            controllers.ReviewDetailsController.businessDetails(service: String)
@@ -62,3 +67,10 @@ GET         /fetch-review-details/:service                                      
 GET         /back-link/:service                                                 controllers.ExternalLinkController.backLink(service: String)
 
 GET         /external-data/:service                                             controllers.ExternalCacheRequestController.fetchCachedBusinessReviewDetails(service: String)
+
+
+#GET         /business-verification/:service/SOP/name                            controllers.BusinessNameController.showSopName(service)
+#POST        /business-verification/:service/SOP/name                            controllers.BusinessNameController.submitSopName(service)
+#
+#GET         /business-verification/:service/SOP/utr                             controllers.BusinessUtrController.showSopUtr(service)
+#POST        /business-verification/:service/SOP/utr                             controllers.BusinessUtrController.submitSopUtr(service)

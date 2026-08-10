@@ -76,7 +76,7 @@
   <h2 class="govuk-heading-s" id="details-not-found-utr-reason-header">@messages("bc.details-not-found.utr-reason.header")</h2>
   <p class="govuk-body" id="details-not-found-utr-reason-text">@messages("bc.details-not-found.utr-reason.text")</p>
 
-    @formHelper(action=controllers.routes.BusinessVerificationController.businessForm(service, businessType)){
+    @formHelper(action=controllers.routes.BusinessNameController.onPageLoad(service, businessType)){
 
         @govukButton(Button(
             content = Text(messages("bc.details-not-found.try-again"))

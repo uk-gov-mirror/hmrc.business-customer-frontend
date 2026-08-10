@@ -63,8 +63,6 @@
         @govukErrorSummary(ErrorSummary().withFormErrorsAsText(businessRegistrationForm))
     }
 
-
-
   @formHelper(action = controllers.nonUKReg.routes.BusinessRegController.send(service, messages(displayDetails.businessType))) {
 
     @govukFieldset(Fieldset(
@@ -173,8 +171,6 @@
             )
         ))
     ))
-
-        
 
     @govukButton(Button(
         content = Text(submitButtonText),
