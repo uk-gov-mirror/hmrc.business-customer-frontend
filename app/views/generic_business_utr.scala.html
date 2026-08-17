@@ -108,6 +108,11 @@ heading: String,
     <p class="govuk-body" id="business-type-paragraph">@registeredMessageKey</p>
 
     <p class="govuk-body" id="business-find-paragraph">@findUtrMessageKey</p>
+    <p class="govuk-body">
+        <a class="govuk-link" rel="noreferrer noopener" target="_blank" href=@{messages("bc.business-verification.utr.link")}>
+            @{hintLinkText}
+        </a>
+    </p>
 
     @formHelper(action = controllers.routes.BusinessUtrController.submit(service,businessType)) {
 
@@ -117,21 +122,12 @@ heading: String,
                 Input(
                     label = Label(
                         content = Text(Messages("bc.business-verification.coUTRField")),
-                        classes = "govuk-visually-hidden",
-                        isPageHeading = true
+                        classes = "govuk-visually-hidden govuk-!-display-block",
+                        isPageHeading = false
                     ),
                      id = "utr",
                      hint = Some(Hint(
-            content = HtmlContent(
-                 s"""
-                    <p class="govuk-body govuk-hint">${Messages("bc.business-verification.utr.lengthHint")}</p>
-                    <p class="govuk-body govuk-hint">
-                        <a class="govuk-link" rel="noreferrer noopener" target="_blank" href=${messages("bc.business-verification.utr.link")}>
-                            ${hintLinkText}
-                        </a>
-                    </p>
-                """
-            )
+            content = Text(Messages("bc.business-verification.utr.lengthHint"))
         )),
                 ).withFormField(form("utr"))
             )
