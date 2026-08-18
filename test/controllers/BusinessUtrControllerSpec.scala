@@ -92,12 +92,27 @@ class BusinessUtrControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
     "companyPageTitle"        -> "bc.business-verification.coUTR",
     "partnershipPageTitle"    -> "bc.business-verification.psaUTR",
     "almsParagraphText"       -> "bc.business-utr.paragraph.amls.corporation",
-    "questionText"            -> "bc.business-verification.coUTRField"
+    "questionText"            -> "bc.business-verification.genericUTR.short"
   )
 
-  private def getMessage(key: String, service: Option[String] = None) = {
-    if (service.isDefined) s"${messages(messageFinder(key), messages(s"bc.business-utr.paragraph.registered.${service.getOrElse("").toLowerCase}"))}"
-    else s"${messages(messageFinder(key))}"
+  private def getMessage(
+                          key: String,
+                          service: Option[String] = None,
+                          subString: Option[String] = None
+                        ): String = {
+    if (service.isDefined) {
+      messages(
+        messageFinder(key),
+        messages(s"bc.business-utr.paragraph.registered.${service.get.toLowerCase}")
+      )
+    } else if (key == "questionText") {
+      subString match {
+        case Some(value) => messages(messageFinder(key), value)
+        case None        => messages(messageFinder(key))
+      }
+    } else {
+      messages(messageFinder(key))
+    }
   }
 
   val businessTypes: Seq[String] =
@@ -200,7 +215,7 @@ class BusinessUtrControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
                     "Is this page not working properly? (opens in new tab)"
                   )
                   document.select("label.govuk-label").eachText().get(0) must be(
-                    getMessage("questionText")
+                    getMessage("questionText", subString = Some("Corporation"))
                   )
                   document.getElementsByClass("govuk-hint").text() must include(
                     getMessage("UtrLengthHint")
@@ -252,7 +267,7 @@ class BusinessUtrControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
                     "Is this page not working properly? (opens in new tab)"
                   )
                   document.select("label.govuk-label").eachText().get(0) must be(
-                    getMessage("questionText")
+                    getMessage("questionText", subString = Some("Corporation"))
                   )
                   document.getElementsByClass("govuk-hint").text() must include(
                     getMessage("UtrLengthHint")
@@ -335,7 +350,7 @@ class BusinessUtrControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
                   "Is this page not working properly? (opens in new tab)"
                 )
                 document.select("label.govuk-label").eachText().get(0) must be(
-                  getMessage("questionText")
+                  getMessage("questionText", subString = Some("Partnership"))
                 )
                 document.getElementsByClass("govuk-hint").text() must include(
                   getMessage("UtrLengthHint")
@@ -418,7 +433,7 @@ class BusinessUtrControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
                 "Is this page not working properly? (opens in new tab)"
               )
               document.select("label.govuk-label").eachText().get(0) must be(
-                getMessage("questionText")
+                getMessage("questionText", subString = Some("Self Assessment"))
               )
               document.getElementsByClass("govuk-hint").text() must include(
                 getMessage("UtrLengthHint")
@@ -468,7 +483,7 @@ class BusinessUtrControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
               "Is this page not working properly? (opens in new tab)"
             )
             document.select("label.govuk-label").eachText().get(0) must be(
-              getMessage("questionText")
+              getMessage("questionText", subString = Some("Self Assessment"))
             )
             document.getElementsByClass("govuk-hint").text() must include(
               getMessage("UtrLengthHint")
@@ -540,10 +555,10 @@ class BusinessUtrControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
                 getMessage("findCorporationTax")
               }
               document.select("label.govuk-label").eachText().get(0) must be(
-                getMessage("questionText")
+                getMessage("questionText", subString = Some("Corporation"))
               )
               document.select("label.govuk-label").eachText().get(0) must be(
-                getMessage("questionText")
+                getMessage("questionText", subString = Some("Corporation"))
               )
               document.getElementsByClass("govuk-link").text()
               if (service == "AMLS") {
@@ -557,7 +572,7 @@ class BusinessUtrControllerSpec extends PlaySpec with GuiceOneServerPerSuite wit
                 "Is this page not working properly? (opens in new tab)"
               )
               document.select("label.govuk-label").eachText().get(0) must be(
-                getMessage("questionText")
+                getMessage("questionText", subString = Some("Corporation"))
               )
               document.getElementsByClass("govuk-hint").text() must include(
                 getMessage("UtrLengthHint")

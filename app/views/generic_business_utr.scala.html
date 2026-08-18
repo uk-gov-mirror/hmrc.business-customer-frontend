@@ -116,13 +116,11 @@ heading: String,
 
     @formHelper(action = controllers.routes.BusinessUtrController.submit(service,businessType)) {
 
-            <h2 class="govuk-heading-s">@whatIsUtrMessage</h2>
-
             @govukInput(
                 Input(
                     label = Label(
-                        content = Text(Messages("bc.business-verification.coUTRField")),
-                        classes = "govuk-visually-hidden govuk-!-display-block",
+                        content = Text(whatIsUtrMessage),
+                        classes = "govuk-label--s",
                         isPageHeading = false
                     ),
                      id = "utr",
