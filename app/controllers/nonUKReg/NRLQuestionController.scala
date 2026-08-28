@@ -21,6 +21,7 @@ import connectors.{BackLinkCacheConnector, BusinessRegCacheConnector}
 import controllers.BackLinkController
 import controllers.auth.AuthActions
 import forms.BusinessRegistrationForms._
+
 import javax.inject.Inject
 import models.NRLQuestion
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -28,7 +29,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import utils.BusinessCustomerConstants.NrlFormId
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class NRLQuestionController @Inject()(val authConnector: AuthConnector,
                                       val backLinkCacheConnector: BackLinkCacheConnector,
@@ -49,11 +50,17 @@ class NRLQuestionController @Inject()(val authConnector: AuthConnector,
       if (authContext.isAgent) {
         forwardBackLinkToNextPage(businessRegController.controllerId, controllers.nonUKReg.routes.BusinessRegController.register(service, businessType = "NUK"))
       } else {
+        val backLinkUrl = request.getQueryString("backLinkUrl")
         for {
+          _ <- if (service == "ATED" && backLinkUrl.isDefined)
+            setBackLink(controllerId, backLinkUrl)
+          else
+            Future.successful(None)
           backLink <- currentBackLink
           savedNRL <- businessRegistrationCache.fetchAndGetCachedDetails[NRLQuestion](NrlFormId)
-        } yield
+        } yield {
           Ok(template(nrlQuestionForm.fill(savedNRL.getOrElse(NRLQuestion())), service, backLink))
+        }
       }
     }
   }

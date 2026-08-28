@@ -35,7 +35,7 @@
             href = backLink.get,
             content = Text("Back")
         ))
-    }
+    } else {@govukBackLink(BackLink.mimicsBrowserBackButtonViaJavaScript)}
 }
 
 @bcMain(title = titleBuilder(messages("bc.nrl.title"), Some(nrlQuestionForm), Some(service)), service = service, backlink=Some(backLinkHtml)) {
