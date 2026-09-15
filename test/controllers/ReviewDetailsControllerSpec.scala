@@ -241,22 +241,6 @@ class ReviewDetailsControllerSpec extends PlaySpec with GuiceOneServerPerSuite w
             }
           }
 
-          "redirect to the correspondence address page for capital-gains-tax-service" in {
-            continueWithAuthorisedUser("capital-gains-tax") {
-              result =>
-                status(result) must be(SEE_OTHER)
-                redirectLocation(result).get must include("/capital-gains-tax/subscription/company/correspondence-address-confirm")
-            }
-          }
-
-          "redirect to the confirmation for agents address page for capital-gains-tax-subscription service" in {
-            continueWithAuthorisedUser("capital-gains-tax-agents") {
-              result =>
-                status(result) must be(SEE_OTHER)
-                redirectLocation(result).get must include("/capital-gains-tax/subscription/agent/registered/subscribe")
-            }
-          }
-
           "return agent registration page correctly for Agents" in {
             when(mockAgentRegistrationService.isAgentEnrolmentAllowed(ArgumentMatchers.eq(service))).thenReturn(true)
             continueWithAuthorisedAgentEMAC(service) {

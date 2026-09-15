@@ -318,27 +318,13 @@ class BusinessVerificationControllerSpec
         }
       }
 
-      "if non-uk with capital-gains-tax service, continue to registration page" in new Setup {
+      "if non-uk, continue to registration page" in new Setup {
         when(
           mockBackLinkCache.saveBackLink(
             ArgumentMatchers.any(),
             ArgumentMatchers.any()
           )(ArgumentMatchers.any(), ArgumentMatchers.any())
         ).thenReturn(Future.successful(None))
-        continueWithAuthorisedUserJson(
-          controller,
-          Map("businessType" -> "NUK"),
-          "capital-gains-tax"
-        ) { result =>
-          status(result) must be(SEE_OTHER)
-          redirectLocation(result).get must include(
-            s"/business-customer/register/capital-gains-tax/NUK"
-          )
-        }
-      }
-
-      "if non-uk, continue to registration page" in new Setup {
-        willSaveBackLink("/business-customer/business-verification/ATED")
         continueWithAuthorisedUserJson(
           controller,
           Map("businessType" -> "NUK")

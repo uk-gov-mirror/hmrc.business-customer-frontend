@@ -123,32 +123,6 @@ class BCUtilsSpec extends PlaySpec with GuiceOneServerPerSuite with Injecting {
         )
       }
 
-      "return the correct map for capital-gains-tax" in {
-        val typeMap = bcUtils.businessTypeMap("capital-gains-tax", isAgent = false)
-        typeMap.size must be(6)
-        typeMap mustBe Seq(
-          "NUK" -> "bc.business-verification.NUK",
-          "LTD" -> "bc.business-verification.LTD",
-          "OBP" -> "bc.business-verification.PRT",
-          "LP" -> "bc.business-verification.LP",
-          "LLP" -> "bc.business-verification.LLP",
-          "UIB" -> "bc.business-verification.UIB"
-        )
-      }
-
-      "return the correct sequence for capital-gains-tax-agents" in {
-        val typeMap = bcUtils.businessTypeMap("capital-gains-tax-agents", isAgent = false)
-        typeMap.size must be(6)
-        typeMap mustBe Seq(
-          "LTD" -> "bc.business-verification.LTD",
-          "LLP" -> "bc.business-verification.LLP",
-          "SOP" -> "bc.business-verification.SOP",
-          "OBP" -> "bc.business-verification.PRT",
-          "LP" -> "bc.business-verification.LP",
-          "NUK" -> "bc.business-verification.NUK"
-        )
-      }
-
       "return default map when passed nothing" in {
         val typeMap = bcUtils.businessTypeMap("", isAgent = false)
         typeMap.size must be(6)

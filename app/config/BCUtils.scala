@@ -92,12 +92,6 @@ trait BCUtils {
       "UT" -> "bc.business-verification.UT", "ULTD" -> "bc.business-verification.ULTD",
       "NUK" -> "bc.business-verification.agent.NUK"
     )
-    val isCGTBusinessTypes = Seq (
-      "NUK" -> "bc.business-verification.NUK", "LTD" -> "bc.business-verification.LTD",
-      "OBP" -> "bc.business-verification.PRT", "LP" -> "bc.business-verification.LP",
-      "LLP" -> "bc.business-verification.LLP", "UIB" -> "bc.business-verification.UIB"
-    )
-    val isCGTAgentTypes = Set("LTD", "LLP", "SOP", "OBP", "LP", "NUK")
 
     def handleAted: Seq[(String, String)] = {
       if (isAgent) {
@@ -119,8 +113,6 @@ trait BCUtils {
         "UIB" -> "bc.business-verification.amls.UIB"
       )
       case "ated" => handleAted
-      case "capital-gains-tax" => isCGTBusinessTypes
-      case "capital-gains-tax-agents" => isAtedAgentBusinessTypes.filter{case (code, _) => isCGTAgentTypes(code)}
       case _ => fixedBusinessTypes
     }
   }

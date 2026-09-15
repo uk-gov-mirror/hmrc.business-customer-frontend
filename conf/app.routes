@@ -67,10 +67,3 @@ GET         /fetch-review-details/:service                                      
 GET         /back-link/:service                                                 controllers.ExternalLinkController.backLink(service: String)
 
 GET         /external-data/:service                                             controllers.ExternalCacheRequestController.fetchCachedBusinessReviewDetails(service: String)
-
-
-#GET         /business-verification/:service/SOP/name                            controllers.BusinessNameController.showSopName(service)
-#POST        /business-verification/:service/SOP/name                            controllers.BusinessNameController.submitSopName(service)
-#
-#GET         /business-verification/:service/SOP/utr                             controllers.BusinessUtrController.showSopUtr(service)
-#POST        /business-verification/:service/SOP/utr                             controllers.BusinessUtrController.submitSopUtr(service)

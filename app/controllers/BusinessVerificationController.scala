@@ -86,8 +86,6 @@ class BusinessVerificationController @Inject()(val config: ApplicationConfig,
             if (services.exists(_.equalsIgnoreCase(service))) businessRegCacheConnector.cacheDetails(s"$CacheRegistrationDetails$service", value)
             val returnCall = Some(routes.BusinessVerificationController.businessVerification(service).url)
             value.businessType match {
-              case Some("NUK") if service.equals("capital-gains-tax") =>
-                redirectWithBackLink(businessRegController.controllerId, controllers.nonUKReg.routes.BusinessRegController.register(service, "NUK"), returnCall)
               case Some("NUK") if service.equals("ATED") && !authContext.isAgent =>
                 redirectToExternal(
                   appConfig.conf.getConfString(s"ated.overseasSameAccountUrl", throw new Exception("")),
