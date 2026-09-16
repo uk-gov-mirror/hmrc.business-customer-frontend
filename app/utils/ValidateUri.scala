@@ -18,8 +18,6 @@ package utils
 
 object ValidateUri {
 
-  private val allowList: Seq[String] = Seq("capital-gains-tax", "capital-gains-tax-agents")
-
-  def isValid(x: Seq[String], n: String): Boolean = (x ++ allowList).toSet(n.toLowerCase)
+  def isValid(x: Seq[String], n: String): Boolean = x.toSet(n.toLowerCase)
 
 }

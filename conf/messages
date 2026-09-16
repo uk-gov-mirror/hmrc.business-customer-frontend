@@ -132,8 +132,6 @@ bc.business-verification-error.saUtr = Enter a Self Assessment Unique Taxpayer R
 bc.business-verification-error.saUtr.length = Self Assessment Unique Taxpayer Reference must be 10 digits. If it is 13 digits only enter the last 10
 bc.business-verification-error.utr = Unique Taxpayer Reference must be 10 digits. If it is 13 digits only enter the last 10.
 bc.business-verification-error.businessName = Enter a registered company name
-bc.business-verification-error.businessName.length = A business name cannot be more than 105 characters
-bc.business-verification-error.businessPartnerName.length = A partnership business name cannot be more than 105 characters
 
 bc.business-verification-error.cotaxutr = Enter a Corporation Tax Unique Taxpayer Reference
 bc.business-verification-error.cotaxutr.length = Enter a 10-digit Unique Taxpayer Reference (UTR). If your UTR is 13 digits, enter only the last 10 digits
@@ -359,7 +357,6 @@ bc.non-uk-reg-error.hasBusinessUniqueId.not-selected = You must select one optio
 bc.non-uk-reg.hasBusinessUniqueId = Do they have an overseas company registration number?
 bc.non-uk-reg.hasBusinessUniqueId.help.question = What is an overseas company registration number?
 bc.non-uk-reg.hasBusinessUniqueId.help.answer = Enter any overseas reference related to the property (for example the company registration number or tax reference from an overseas country).
-bc.non-uk-reg.hasBusinessUniqueId = Has overseas company registration number
 bc.non-uk-reg.businessUniqueId = Overseas company registration number
 bc.non-uk-reg.issuingInstitution = Institution that issued the number
 bc.non-uk-reg.issuingInstitution.hint = For example, an overseas tax department
